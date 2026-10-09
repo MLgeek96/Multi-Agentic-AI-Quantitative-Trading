@@ -1,0 +1,13 @@
+portfolio,cycle,days,net_pnl_usdt,average_daily_return_bps
+Original variable allocator,altcoin_season,53,117956.95185995498,22.16789965674023
+Original variable allocator,bitcoin_season,80,38977.70751806942,6.338853251441035
+Original variable allocator,ethereum_season,127,4579.420477194595,-0.3618506652635121
+Signal equal buckets,altcoin_season,53,287352.68111955,50.83733378661576
+Signal equal buckets,bitcoin_season,80,-18306.612368973787,5.298918282972033
+Signal equal buckets,ethereum_season,127,-4310.553985785344,-1.836715174144495
+Signal 50/25/25 cycle tilt,altcoin_season,53,250840.90110705432,47.39509382122366
+Signal 50/25/25 cycle tilt,bitcoin_season,80,-36396.940679133986,0.9782739840312974
+Signal 50/25/25 cycle tilt,ethereum_season,127,40695.717618791154,1.3646620793162663
+Long-only equal-bucket benchmark,altcoin_season,53,-331957.80726717936,-82.1814372367252
+Long-only equal-bucket benchmark,bitcoin_season,80,-88600.45910068986,-3.3224646416840438
+Long-only equal-bucket benchmark,ethereum_season,127,225309.50060703023,27.12964631613997

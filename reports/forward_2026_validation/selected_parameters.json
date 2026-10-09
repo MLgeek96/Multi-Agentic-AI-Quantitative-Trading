@@ -1,0 +1,188 @@
+{
+  "spot_long_only": {
+    "model_selection": {
+      "ma_crossover": {
+        "fast": 10,
+        "slow": 50,
+        "filter": "none"
+      },
+      "bollinger_mean_reversion": {
+        "window": 20,
+        "width": 1.5,
+        "exit_z": 0.25
+      },
+      "bollinger_breakout": {
+        "window": 40,
+        "width": 2.0,
+        "exit_z": 0.0
+      },
+      "dynamic_grid": {
+        "center_window": 20,
+        "grid_step": 0.02,
+        "levels": 4,
+        "trend_threshold": 0.06,
+        "trend_fast": 20,
+        "trend_slow": 100
+      },
+      "momentum_only": {
+        "sma_fast": 10,
+        "sma_slow": 50,
+        "rsi_long": 55.0,
+        "rsi_short": 45.0,
+        "minimum_votes": 2
+      },
+      "hmm_switch": {
+        "hmm_training_days": 730,
+        "hmm_retrain_days": 60,
+        "sma_fast": 10,
+        "sma_slow": 50,
+        "bollinger_width": 1.5
+      },
+      "linear_regression": {
+        "training_days": 730,
+        "retrain_days": 30,
+        "ridge_penalty": 10.0,
+        "volatility_threshold": 0.05
+      }
+    },
+    "macro_regime": {
+      "candidate_id": "macro_regime_09",
+      "feature_set": "macro_volume",
+      "hmm_training_days": 365,
+      "rule_pair": "breakout_flat",
+      "confirmation": "soft",
+      "candidate_type": "combined_grid"
+    },
+    "gatekeeper": {
+      "candidate_id": "gatekeeper_21",
+      "feature_set": "crypto_only",
+      "hmm_training_days": 730,
+      "low_volatility_scale": 0.5,
+      "confirmation": "ma"
+    }
+  },
+  "futures_long_only": {
+    "model_selection": {
+      "ma_crossover": {
+        "fast": 10,
+        "slow": 50,
+        "filter": "none"
+      },
+      "bollinger_mean_reversion": {
+        "window": 20,
+        "width": 1.5,
+        "exit_z": 0.25
+      },
+      "bollinger_breakout": {
+        "window": 40,
+        "width": 2.0,
+        "exit_z": 0.0
+      },
+      "dynamic_grid": {
+        "center_window": 20,
+        "grid_step": 0.02,
+        "levels": 4,
+        "trend_threshold": 0.06,
+        "trend_fast": 20,
+        "trend_slow": 100
+      },
+      "momentum_only": {
+        "sma_fast": 10,
+        "sma_slow": 50,
+        "rsi_long": 55.0,
+        "rsi_short": 45.0,
+        "minimum_votes": 2
+      },
+      "hmm_switch": {
+        "hmm_training_days": 730,
+        "hmm_retrain_days": 30,
+        "sma_fast": 10,
+        "sma_slow": 50,
+        "bollinger_width": 1.5
+      },
+      "linear_regression": {
+        "training_days": 730,
+        "retrain_days": 30,
+        "ridge_penalty": 1.0,
+        "volatility_threshold": 0.05
+      }
+    },
+    "macro_regime": {
+      "candidate_id": "macro_regime_09",
+      "feature_set": "macro_volume",
+      "hmm_training_days": 365,
+      "rule_pair": "breakout_flat",
+      "confirmation": "soft",
+      "candidate_type": "combined_grid"
+    },
+    "gatekeeper": {
+      "candidate_id": "gatekeeper_21",
+      "feature_set": "crypto_only",
+      "hmm_training_days": 730,
+      "low_volatility_scale": 0.5,
+      "confirmation": "ma"
+    }
+  },
+  "futures_long_short": {
+    "model_selection": {
+      "ma_crossover": {
+        "fast": 20,
+        "slow": 100,
+        "filter": "none"
+      },
+      "bollinger_mean_reversion": {
+        "window": 20,
+        "width": 1.5,
+        "exit_z": 0.25
+      },
+      "bollinger_breakout": {
+        "window": 40,
+        "width": 2.0,
+        "exit_z": 0.0
+      },
+      "dynamic_grid": {
+        "center_window": 40,
+        "grid_step": 0.02,
+        "levels": 4,
+        "trend_threshold": 0.03,
+        "trend_fast": 20,
+        "trend_slow": 100
+      },
+      "momentum_only": {
+        "sma_fast": 20,
+        "sma_slow": 100,
+        "rsi_long": 60.0,
+        "rsi_short": 40.0,
+        "minimum_votes": 3
+      },
+      "hmm_switch": {
+        "hmm_training_days": 730,
+        "hmm_retrain_days": 30,
+        "sma_fast": 10,
+        "sma_slow": 50,
+        "bollinger_width": 2.0
+      },
+      "linear_regression": {
+        "training_days": 730,
+        "retrain_days": 30,
+        "ridge_penalty": 1.0,
+        "volatility_threshold": 0.1
+      }
+    },
+    "macro_regime": {
+      "candidate_id": "macro_regime_10",
+      "feature_set": "macro_volume",
+      "hmm_training_days": 365,
+      "rule_pair": "breakout_flat",
+      "confirmation": "agreement",
+      "candidate_type": "combined_grid"
+    },
+    "gatekeeper": {
+      "candidate_id": "gatekeeper_21",
+      "feature_set": "crypto_only",
+      "hmm_training_days": 730,
+      "low_volatility_scale": 0.5,
+      "confirmation": "ma"
+    }
+  }
+}

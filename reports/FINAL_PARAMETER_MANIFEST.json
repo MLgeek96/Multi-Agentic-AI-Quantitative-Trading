@@ -1,0 +1,537 @@
+{
+  "schema_version": 1,
+  "prepared_date": "2026-09-28",
+  "evidence_cutoff": {
+    "hourly_utc": "2026-09-17T23:00:00Z",
+    "common_daily_utc": "2026-09-16",
+    "note": "The report preparation date is later than the latest completed validated experiment. No results are claimed for 2026-09-18 through 2026-09-28."
+  },
+  "status": "research_only_not_live_approved",
+  "primary_sixcoin_experiment": {
+    "symbols": [
+      "BTCUSDT",
+      "ETHUSDT",
+      "SOLUSDT",
+      "XRPUSDT",
+      "BNBUSDT",
+      "DOGEUSDT"
+    ],
+    "timeframe": "1h",
+    "selection_cutoff": "2025-12-31",
+    "validation_start": "2026-01-01T00:00:00Z",
+    "validation_end": "2026-09-17T23:00:00Z",
+    "execution_modes": [
+      "futures_long_short",
+      "futures_long_only",
+      "spot_long_only"
+    ],
+    "training_designs": {
+      "static_2025": {
+        "train_start": "2025-01-01",
+        "train_end_exclusive": "2026-01-01",
+        "train_period_days": 365,
+        "backtest_period_days": 260,
+        "refits_during_2026": 0
+      },
+      "native_history": {
+        "train_end_exclusive": "2026-01-01",
+        "futures_train_days": {
+          "BTCUSDT": 2150,
+          "ETHUSDT": 2150,
+          "SOLUSDT": 1893,
+          "XRPUSDT": 2145,
+          "BNBUSDT": 2110,
+          "DOGEUSDT": 1958
+        },
+        "spot_train_days": {
+          "BTCUSDT": 2150,
+          "ETHUSDT": 2150,
+          "SOLUSDT": 1927,
+          "XRPUSDT": 2150,
+          "BNBUSDT": 2150,
+          "DOGEUSDT": 2150
+        },
+        "backtest_period_days": 260,
+        "refits_during_2026": 0
+      }
+    },
+    "standalone_execution": {
+      "initial_wallet_usdt": 10000.0,
+      "max_open_trades": 6,
+      "stake_amount_usdt": 1666.66666667,
+      "leverage": 1.0,
+      "margin_mode": "isolated",
+      "fee_bps_per_side": 10.0,
+      "funding_included": false,
+      "slippage_included": false,
+      "startup_candles": 1000
+    },
+    "bollinger_40d": {
+      "window_hours": 960,
+      "window_days": 40,
+      "standard_deviations": 1.5,
+      "long_entry": "fresh close cross above upper band",
+      "short_entry": "fresh close cross below lower band",
+      "exit": "middle band",
+      "stoploss_fraction": -0.25,
+      "trailing_stop": false,
+      "minimal_roi": {
+        "0": 100.0
+      }
+    },
+    "sequence_models": {
+      "base_rule": "bollinger_40d",
+      "sequence_length_hours": 48,
+      "target_horizon_hours": 24,
+      "prediction_threshold_fraction": 0.002,
+      "features": [
+        "return_1h",
+        "return_6h",
+        "return_24h",
+        "candle_range",
+        "candle_body",
+        "log_volume_change",
+        "volatility_6h",
+        "volatility_24h",
+        "volatility_168h",
+        "price_to_ma_24h",
+        "price_to_ma_120h",
+        "price_to_ma_960h",
+        "log_volume_zscore_168h",
+        "rsi_14_scaled",
+        "hour_sin",
+        "hour_cos",
+        "weekday_sin",
+        "weekday_cos"
+      ],
+      "data_split": {
+        "test_fraction": 0.1,
+        "shuffle": false
+      },
+      "training": {
+        "optimizer": "AdamW",
+        "loss": "Huber",
+        "learning_rate": 0.0003,
+        "weight_decay": 0.0001,
+        "max_epochs": 6,
+        "batch_size": 128,
+        "early_stopping_patience": 2,
+        "random_seed": 42
+      },
+      "architectures": {
+        "RNN": {
+          "hidden_dim": 32,
+          "num_layers": 1,
+          "dropout": 0.1
+        },
+        "GRU": {
+          "hidden_dim": 32,
+          "num_layers": 1,
+          "dropout": 0.1
+        },
+        "LSTM": {
+          "hidden_dim": 32,
+          "num_layers": 1,
+          "dropout": 0.1
+        },
+        "Transformer": {
+          "d_model": 32,
+          "attention_heads": 4,
+          "num_layers": 1,
+          "feedforward_dim": 64,
+          "dropout": 0.1
+        }
+      }
+    },
+    "hmm": {
+      "states": 3,
+      "training_windows": {
+        "primary": {
+          "start": "2020-01-01",
+          "end": "2024-12-31T23:00:00Z"
+        },
+        "native_history": {
+          "start": "pair-specific available history",
+          "end": "2025-12-31T23:00:00Z"
+        }
+      },
+      "state_labels": [
+        "trend",
+        "sideways",
+        "crisis"
+      ],
+      "covariance_type": "diag",
+      "fit_seeds": [
+        11,
+        22,
+        33,
+        42,
+        77
+      ],
+      "fit_selection": "highest training log likelihood",
+      "max_iterations": 200,
+      "tolerance": 0.0001,
+      "features": [
+        "return_24h",
+        "volatility_24h",
+        "volatility_168h",
+        "volatility_ratio",
+        "trend_strength_120h",
+        "drawdown_168h",
+        "volume_z_168h"
+      ],
+      "inference": "causal forward filter",
+      "regime_confidence_threshold": 0.55,
+      "crisis_probability_threshold": 0.45,
+      "defensive_confirmation_candles": 3,
+      "defensive_uncertain_action": "exit and remain in cash",
+      "stoploss_fraction": -0.15,
+      "trend_sleeve": {
+        "bollinger_window_hours": 480,
+        "bollinger_window_days": 20,
+        "bollinger_standard_deviations": 1.5,
+        "ema_fast": 24,
+        "ema_slow": 120,
+        "macd_fast": 12,
+        "macd_slow": 26,
+        "macd_signal": 9,
+        "rsi_period": 14,
+        "rsi_long": 55,
+        "rsi_short": 45
+      },
+      "sideways_sleeve": {
+        "bollinger_window_hours": 168,
+        "bollinger_window_days": 7,
+        "bollinger_standard_deviations": 2.0,
+        "rsi_period": 14,
+        "rsi_long": 35,
+        "rsi_short": 65
+      },
+      "hmm_lstm": {
+        "trend_prediction_threshold_fraction": 0.002,
+        "sideways_prediction_rule": "matching sign"
+      },
+      "parameter_directories": {
+        "primary_futures": "freqtrade/user_data/regime_models",
+        "primary_spot": "freqtrade/user_data/regime_models_spot",
+        "native_history_futures": "freqtrade/user_data/regime_models_full_history",
+        "native_history_spot": "freqtrade/user_data/regime_models_spot_full_history"
+      }
+    },
+    "ensemble": {
+      "voting_models": [
+        "Bollinger 40d",
+        "RNN static",
+        "GRU static",
+        "LSTM static",
+        "Transformer static"
+      ],
+      "minimum_agreeing_votes": 3,
+      "signal_sample_time_utc": "23:00",
+      "return_lag_days": 1,
+      "equal_allocation_denominator": "max(4, active_coin_count)",
+      "variable_raw_weight": "direction * vote_confidence / trailing_volatility",
+      "trailing_volatility_days": 30,
+      "minimum_volatility_history_days": 20,
+      "covariance_days": 30,
+      "per_coin_absolute_weight_cap": 0.25,
+      "annualized_portfolio_volatility_target": 0.2,
+      "maximum_gross_exposure": 1.0,
+      "hmm_gate_multipliers": {
+        "trend": 1.0,
+        "sideways": 0.5,
+        "crisis": 0.0,
+        "uncertain": 0.0
+      },
+      "costs": {
+        "fee_bps_per_one_way_turnover": 10.0,
+        "base_slippage_bps_per_one_way_turnover": 5.0,
+        "slippage_stress_bps": [
+          2.0,
+          5.0,
+          10.0
+        ],
+        "futures_funding": "observed Binance USD-M events",
+        "funding_event_count": 4680,
+        "spot_funding": "not applicable"
+      }
+    }
+  },
+  "supporting_research": {
+    "pattern_momentum": {
+      "source": "crypto_quant/pattern_momentum.py",
+      "structure_timeframe": "4h",
+      "execution_timeframe": "1h",
+      "strategies": {
+        "double_reversal": {
+          "pattern_lookback_bars": 60,
+          "max_holding_hours": 504
+        },
+        "triangle_breakout": {
+          "pattern_lookback_bars": 30,
+          "max_holding_hours": 336
+        },
+        "flag_breakout": {
+          "pattern_lookback_bars": 16,
+          "max_holding_hours": 240
+        }
+      },
+      "volume_multiplier": 1.5,
+      "rsi_period": 14,
+      "rsi_long_range": [
+        45.0,
+        78.0
+      ],
+      "rsi_short_range": [
+        22.0,
+        55.0
+      ],
+      "divergence_lookback_bars": 24,
+      "minimum_reward_risk": 3.0,
+      "risk_fraction": 0.01,
+      "maximum_notional_leverage": 1.0,
+      "fee_bps_per_side": 4.0,
+      "slippage_bps_per_side": 2.0,
+      "maximum_drawdown_fraction": 0.25,
+      "stop_atr_buffer": 0.5,
+      "breakeven_trigger_r": 1.0,
+      "trailing_trigger_r": 2.0,
+      "retained_favorable_excursion_fraction": 0.33
+    },
+    "daily_adaptive_portfolio": {
+      "source": "config/daily_portfolio.json",
+      "symbols": [
+        "BTCUSDT",
+        "ETHUSDT"
+      ],
+      "parameter_training_days": 365,
+      "sma_parameter_grid": [
+        [
+          10,
+          50
+        ],
+        [
+          20,
+          100
+        ],
+        [
+          30,
+          150
+        ]
+      ],
+      "minimum_training_sharpe": 0.0,
+      "volatility_window_days": 30,
+      "covariance_window_days": 60,
+      "annualized_volatility_target": 0.2,
+      "maximum_asset_weight": 0.4,
+      "fee_bps": 10.0,
+      "experimental_filter": {
+        "bollinger_window_days": 20,
+        "bollinger_standard_deviations": 2.0,
+        "rsi_period": 14,
+        "rsi_long_range": [
+          45.0,
+          70.0
+        ]
+      }
+    },
+    "classical_model_selection": {
+      "source": "reports/model_selection/selected_parameters.json",
+      "ma_crossover": {
+        "fast": 10,
+        "slow": 50,
+        "filter": "none"
+      },
+      "bollinger_mean_reversion": {
+        "window": 20,
+        "width": 2.5,
+        "exit_z": 0.25
+      },
+      "bollinger_breakout": {
+        "window": 40,
+        "width": 1.5,
+        "exit_z": 0.0
+      },
+      "dynamic_grid": {
+        "center_window": 20,
+        "grid_step": 0.01,
+        "levels": 4,
+        "trend_threshold": 0.03,
+        "trend_fast": 20,
+        "trend_slow": 100
+      },
+      "momentum_only": {
+        "sma_fast": 10,
+        "sma_slow": 50,
+        "rsi_long": 60.0,
+        "rsi_short": 40.0,
+        "minimum_votes": 3
+      },
+      "hmm_switch": {
+        "hmm_training_days": 730,
+        "hmm_retrain_days": 60,
+        "sma_fast": 20,
+        "sma_slow": 100,
+        "bollinger_width": 1.5
+      },
+      "linear_regression": {
+        "training_days": 365,
+        "retrain_days": 30,
+        "ridge_penalty": 1.0,
+        "volatility_threshold": 0.1
+      }
+    },
+    "macro_regime_selection": {
+      "source": "reports/macro_regime/selected_parameters.json",
+      "candidate_id": "macro_regime_08",
+      "feature_set": "macro_volume",
+      "hmm_training_days": 365,
+      "rule_pair": "breakout_flat",
+      "confirmation": "none",
+      "robust_score": -0.6268268221419577
+    },
+    "gatekeeper_selection": {
+      "source": "reports/gatekeeper/selected_parameters.json",
+      "candidate_id": "gatekeeper_33",
+      "feature_set": "macro_volume",
+      "hmm_training_days": 365,
+      "low_volatility_scale": 0.5,
+      "confirmation": "ma",
+      "robust_score": 0.23128132647014632
+    },
+    "forward_2026_selection": {
+      "source": "reports/forward_2026_validation/selected_parameters.json",
+      "note": "This source is authoritative for the complete per-execution-mode nested parameter choices selected on eight half-year folds through 2025."
+    }
+  },
+  "million_usdt_capacity_extension": {
+    "source_config": "config/million_usdt_backtest.json",
+    "report": "freqtrade/reports/2026_million_usdt_quality/million_usdt_quality_report.md",
+    "starting_equity_usdt": 1000000.0,
+    "primary_slippage_bps_per_side": 10.0,
+    "slippage_scenarios_bps_per_side": [
+      5.0,
+      10.0,
+      20.0,
+      30.0
+    ],
+    "fee_bps_per_side": 10.0,
+    "funding": "observed Binance USD-M funding events",
+    "market_impact": {
+      "formula": "daily_volatility * sqrt(order_notional / trailing_adv)",
+      "coefficient": 1.0,
+      "adv_window_days": 30,
+      "volatility_window_days": 30,
+      "inputs_shifted_days": 1
+    },
+    "monte_carlo": {
+      "runs": 1000,
+      "block_size_days": 5,
+      "price_return_perturbation_pct": 10.0,
+      "execution_cost_perturbation_pct": 20.0,
+      "random_seed": 42
+    },
+    "primary_results": {
+      "ensemble_equal": {
+        "final_equity_usdt": 1249319.642914,
+        "return_pct": 24.931964,
+        "max_drawdown_pct": 23.072781
+      },
+      "ensemble_equal_hmm_gate": {
+        "final_equity_usdt": 1148231.599427,
+        "return_pct": 14.82316,
+        "max_drawdown_pct": 14.825872
+      },
+      "ensemble_variable": {
+        "final_equity_usdt": 1161514.079855,
+        "return_pct": 16.151408,
+        "max_drawdown_pct": 9.695546,
+        "monte_carlo_positive_outcomes_pct": 79.5
+      },
+      "ensemble_variable_hmm_gate": {
+        "final_equity_usdt": 1070401.888426,
+        "return_pct": 7.040189,
+        "max_drawdown_pct": 6.287704
+      }
+    },
+    "quality_gate": {
+      "overall": "FAIL",
+      "pass": 8,
+      "partial": 3,
+      "fail": 8,
+      "not_applicable": 1
+    }
+  },
+  "market_cycle_hmm_extension": {
+    "source_config": "config/market_cycle_hmm.json",
+    "report": "freqtrade/reports/2026_market_cycle_hmm/market_cycle_report.md",
+    "training_start": "2020-10-15",
+    "training_end": "2025-12-31",
+    "validation_start": "2026-01-01",
+    "validation_end": "2026-09-17",
+    "state_labels": [
+      "bitcoin_season",
+      "ethereum_season",
+      "altcoin_season"
+    ],
+    "allocation": {
+      "bitcoin_bucket": 0.3333333333333333,
+      "ethereum_bucket": 0.3333333333333333,
+      "altcoin_bucket": 0.3333333333333333,
+      "altcoin_members": [
+        "SOLUSDT",
+        "XRPUSDT",
+        "BNBUSDT",
+        "DOGEUSDT"
+      ],
+      "inactive_bucket_treatment": "cash",
+      "cycle_tilt_comparison": {
+        "favored_bucket": 0.5,
+        "other_buckets_each": 0.25
+      }
+    },
+    "results_at_10bps_slippage": {
+      "original_variable_allocator": {
+        "return_pct": 16.151408,
+        "sharpe": 1.161382,
+        "max_drawdown_pct": 9.695546
+      },
+      "signal_equal_buckets": {
+        "return_pct": 26.473551,
+        "sharpe": 1.042292,
+        "max_drawdown_pct": 16.778376
+      },
+      "signal_cycle_tilt": {
+        "return_pct": 25.513968,
+        "sharpe": 1.042086,
+        "max_drawdown_pct": 15.033159
+      },
+      "long_only_equal_bucket_benchmark": {
+        "return_pct": -19.524877,
+        "sharpe": -0.312357,
+        "max_drawdown_pct": 46.921389
+      }
+    },
+    "decision": "Use equal buckets as the transparent allocation comparison; retain HMM seasons as diagnostics because the tilt did not improve Sharpe and next-day leadership was near chance."
+  },
+  "authoritative_sources": {
+    "final_report": "reports/FINAL_RESEARCH_REPORT.md",
+    "primary_run_manifest": "freqtrade/reports/2026_sixcoin_validation/run_manifest.json",
+    "primary_results": "freqtrade/reports/2026_sixcoin_validation/standalone_freqtrade_results.csv",
+    "primary_portfolios": "freqtrade/reports/2026_sixcoin_validation/portfolio_comparison.csv",
+    "execution_scenarios": "freqtrade/reports/2026_execution_scenarios/standalone_execution_mode_results.csv",
+    "native_history_manifest": "freqtrade/reports/2026_native_history_scenarios/run_manifest.json",
+    "native_history_results": "freqtrade/reports/2026_native_history_scenarios/standalone_execution_mode_results.csv",
+    "forward_2026_parameters": "reports/forward_2026_validation/selected_parameters.json",
+    "bollinger_strategy": "freqtrade/user_data/strategies/BollingerBreakout40D.py",
+    "sequence_strategy": "freqtrade/user_data/strategies/SequenceBreakoutStrategy.py",
+    "hmm_strategy": "freqtrade/user_data/strategies/HMMRegimeSwitchingStrategy.py",
+    "hmm_filter": "freqtrade/user_data/strategies/regime_hmm.py",
+    "ensemble_builder": "freqtrade/user_data/scripts/build_sixcoin_validation_report.py",
+    "million_usdt_capacity_builder": "freqtrade/user_data/scripts/build_million_usdt_quality_report.py",
+    "million_usdt_quality_results": "freqtrade/reports/2026_million_usdt_quality/portfolio_capacity_results.csv",
+    "market_cycle_hmm": "crypto_quant/market_cycle_hmm.py",
+    "market_cycle_builder": "freqtrade/user_data/scripts/build_market_cycle_report.py",
+    "market_cycle_parameters": "freqtrade/reports/2026_market_cycle_hmm/market_cycle_hmm_parameters.json"
+  }
+}

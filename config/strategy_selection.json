@@ -1,0 +1,30 @@
+{
+  "symbols": [
+    "BTCUSDT",
+    "ETHUSDT"
+  ],
+  "market_data_directory": "processed/usdt_futures",
+  "output_directory": "reports/model_selection",
+  "development_period": [
+    "2022-01-01",
+    "2024-01-01"
+  ],
+  "holdout_period": [
+    "2024-01-01",
+    "2026-01-01"
+  ],
+  "development_folds": {
+    "2022_h1": ["2022-01-01", "2022-07-01"],
+    "2022_h2": ["2022-07-01", "2023-01-01"],
+    "2023_h1": ["2023-01-01", "2023-07-01"],
+    "2023_h2": ["2023-07-01", "2024-01-01"]
+  },
+  "initial_equity": 100000.0,
+  "selection_fee_bps": 10.0,
+  "cost_stress_bps": [5.0, 10.0, 20.0, 30.0],
+  "risk_volatility_window": 30,
+  "target_annual_volatility": 0.20,
+  "maximum_asset_weight": 0.50,
+  "maximum_gross_exposure": 1.0,
+  "covariance_window": 60
+}

@@ -1,0 +1,5 @@
+market,symbol,source_kind,first_common_day,last_common_day,common_days,test_observations
+spot,BTCUSDT,Binance public Spot daily API candles,2019-11-13,2026-09-16,2500,259
+spot,ETHUSDT,Binance public Spot daily API candles,2019-11-13,2026-09-16,2500,259
+usdt_futures,BTCUSDT,Binance USD-M hourly candles aggregated to complete UTC days,2020-01-01,2026-09-17,2452,259
+usdt_futures,ETHUSDT,Binance USD-M hourly candles aggregated to complete UTC days,2020-01-01,2026-09-17,2452,259

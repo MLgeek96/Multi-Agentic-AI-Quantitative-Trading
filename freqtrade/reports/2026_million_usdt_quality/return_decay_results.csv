@@ -1,0 +1,5 @@
+portfolio,base_return_pct,half_gross_return_pct
+Ensemble equal,24.931964291393015,10.800133435318294
+Ensemble equal + HMM gate,14.823159942708397,1.8045542540243265
+Ensemble variable,16.151407985521903,5.730359908439309
+Ensemble variable + HMM gate,7.040188842606221,0.5573884635890813

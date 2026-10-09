@@ -1,0 +1,9 @@
+{
+  "mode": "research",
+  "account_key": "crypto-spot-hmm-experiment",
+  "execution_mode": "record_only",
+  "strategy_mode": "hmm_experts",
+  "daily_config_path": "config/daily_portfolio.json",
+  "state_path": "runtime/crypto_agents.hmm.sqlite",
+  "report_directory": "runs/agents/hmm"
+}

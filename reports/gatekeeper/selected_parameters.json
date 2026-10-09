@@ -1,0 +1,8 @@
+{
+  "candidate_id": "gatekeeper_33",
+  "feature_set": "macro_volume",
+  "hmm_training_days": 365,
+  "low_volatility_scale": 0.5,
+  "confirmation": "ma",
+  "robust_score": 0.23128132647014632
+}

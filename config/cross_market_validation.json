@@ -1,0 +1,8 @@
+{
+  "symbols": ["BTCUSDT", "ETHUSDT"],
+  "markets": ["spot", "usdt_futures"],
+  "validation_period": ["2025-01-01", "2026-01-01"],
+  "fee_bps": 10.0,
+  "cost_stress_bps": [5.0, 10.0, 20.0, 30.0],
+  "output_directory": "reports/cross_market_validation"
+}

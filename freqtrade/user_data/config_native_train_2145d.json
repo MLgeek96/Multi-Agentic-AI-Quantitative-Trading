@@ -1,0 +1,7 @@
+{
+  "freqai": {
+    "train_period_days": 2145,
+    "backtest_period_days": 260,
+    "save_backtest_models": false
+  }
+}

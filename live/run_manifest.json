@@ -1,0 +1,16 @@
+{
+  "run_time_utc": "2026-09-17T10:58:49.423000+00:00",
+  "latest_closed_candle": "2026-09-16T00:00:00+00:00",
+  "status": "pre_test",
+  "symbols": [
+    "BTCUSDT",
+    "ETHUSDT"
+  ],
+  "eligibility_listing_times": {
+    "BTCUSDT": "2017-08-17T00:00:00+00:00",
+    "ETHUSDT": "2017-08-17T00:00:00+00:00"
+  },
+  "processed_dates_this_run": [],
+  "data_source": "https://data-api.binance.vision",
+  "orders_enabled": false
+}

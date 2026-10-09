@@ -1,0 +1,13 @@
+market,symbol,strategy,patterns,confirmed,volume_reject,rsi_reject,macd_reject
+usdt_futures,BTCUSDT,double_reversal,235,100,113,9,13
+usdt_futures,BTCUSDT,flag_breakout,15,4,9,2,0
+usdt_futures,BTCUSDT,triangle_breakout,174,79,79,6,10
+usdt_futures,ETHUSDT,double_reversal,183,67,101,3,12
+usdt_futures,ETHUSDT,flag_breakout,7,2,3,1,1
+usdt_futures,ETHUSDT,triangle_breakout,133,62,55,8,8
+spot,BTCUSDT,double_reversal,228,100,112,7,9
+spot,BTCUSDT,flag_breakout,17,4,11,2,0
+spot,BTCUSDT,triangle_breakout,166,71,83,4,8
+spot,ETHUSDT,double_reversal,184,74,99,3,8
+spot,ETHUSDT,flag_breakout,10,1,6,1,2
+spot,ETHUSDT,triangle_breakout,127,50,63,6,8

@@ -1,0 +1,34 @@
+{
+  "training_start": "2020-10-15",
+  "training_end": "2025-12-31",
+  "validation_start": "2026-01-01",
+  "validation_end": "2026-09-17",
+  "hmm_states": 3,
+  "hmm_seeds": [11, 22, 33, 42, 77],
+  "minimum_state_occupancy_pct": 10.0,
+  "relative_momentum_window_days": 30,
+  "correlation_window_days": 30,
+  "starting_equity_usdt": 1000000.0,
+  "fee_bps_per_side": 10.0,
+  "slippage_bps_per_side": 10.0,
+  "market_impact_coefficient": 1.0,
+  "base_bucket_weights": {
+    "bitcoin": 0.3333333333333333,
+    "ethereum": 0.3333333333333333,
+    "altcoins": 0.3333333333333333
+  },
+  "cycle_tilt_weights": {
+    "favored_bucket": 0.5,
+    "other_bucket": 0.25
+  },
+  "altcoin_bucket": ["SOL", "XRP", "BNB", "DOGE"],
+  "source_hypothesis": "https://www.binance.com/en/square/post/28441536312714",
+  "notes": [
+    "The Binance Square post is a third-party hypothesis source, not ground truth.",
+    "The HMM is fit only through 2025-12-31 and is not refit or relabeled on 2026 data.",
+    "A state is labeled Bitcoin, Ethereum, or altcoin season by a one-to-one assignment that maximizes its in-sample mean 30-day relative momentum; a candidate fit is rejected unless every assigned bucket is also the strongest bucket within its own state.",
+    "Signals and cycle states observed on day T affect portfolio returns from T+1.",
+    "Equal buckets mean one third BTC, one third ETH, and one third shared equally among active SOL/XRP/BNB/DOGE signals; unused buckets remain cash.",
+    "The 50/25/25 cycle tilt is an experimental comparison and does not replace the equal-bucket baseline."
+  ]
+}

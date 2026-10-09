@@ -1,0 +1,48 @@
+{
+  "symbols": [
+    "BTCUSDT",
+    "ETHUSDT"
+  ],
+  "market_data_directory": "processed/usdt_futures",
+  "output_directory": "reports/hmm_regime",
+  "macro_features_csv": null,
+  "macro_date_column": "date",
+  "macro_columns": [],
+  "macro_lag_days": 1,
+  "periods": {
+    "development": [
+      "2022-01-01",
+      "2024-01-01"
+    ],
+    "holdout": [
+      "2024-01-01",
+      "2026-01-01"
+    ]
+  },
+  "initial_equity": 100000.0,
+  "hmm_training_days": 730,
+  "hmm_minimum_training_days": 365,
+  "hmm_retrain_days": 30,
+  "hmm_iterations": 100,
+  "hmm_tolerance": 0.00001,
+  "feature_volatility_window": 20,
+  "regime_probability_buffer": 0.05,
+  "macd_fast": 12,
+  "macd_slow": 26,
+  "macd_signal": 9,
+  "sma_fast": 20,
+  "sma_slow": 100,
+  "rsi_period": 14,
+  "rsi_long_threshold": 55.0,
+  "rsi_short_threshold": 45.0,
+  "momentum_minimum_votes": 2,
+  "bollinger_window": 20,
+  "bollinger_standard_deviations": 2.0,
+  "mean_reversion_exit_z": 0.25,
+  "risk_volatility_window": 30,
+  "target_annual_volatility": 0.20,
+  "maximum_asset_weight": 0.50,
+  "maximum_gross_exposure": 1.0,
+  "covariance_window": 60,
+  "fee_bps": 10.0
+}

@@ -1,0 +1,31 @@
+{
+  "symbols": [
+    "BTCUSDT",
+    "ETHUSDT"
+  ],
+  "api_base_url": "https://data-api.binance.vision",
+  "eligibility_cutoff": "2025-08-01",
+  "test_start": "2026-10-01",
+  "test_end": "2026-10-23",
+  "initial_equity": 100000.0,
+  "history_days": 2500,
+  "parameter_training_days": 365,
+  "volatility_window_days": 30,
+  "covariance_window_days": 60,
+  "target_annual_volatility": 0.2,
+  "minimum_training_sharpe": 0.0,
+  "signal_model": "trend_bb_rsi",
+  "bollinger_window": 20,
+  "bollinger_standard_deviations": 2.0,
+  "rsi_period": 14,
+  "rsi_long_minimum": 45.0,
+  "rsi_long_maximum": 70.0,
+  "max_asset_weight": 0.4,
+  "fee_bps": 10.0,
+  "parameter_grid": [
+    [10, 50],
+    [20, 100],
+    [30, 150]
+  ],
+  "output_directory": "live/experiments/btc_eth_bb_rsi"
+}

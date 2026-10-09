@@ -1,0 +1,33 @@
+{
+  "validation_start": "2026-01-01 00:00:00+00:00",
+  "validation_end": "2026-09-17 00:00:00+00:00",
+  "symbols": [
+    "BTC",
+    "ETH",
+    "SOL",
+    "XRP",
+    "BNB",
+    "DOGE"
+  ],
+  "instrument": "Binance USD-M isolated perpetual futures",
+  "leverage": 1.0,
+  "parameter_selection_cutoff": "2025-12-31",
+  "neural_train_start": "2025-01-01",
+  "neural_train_end_exclusive": "2026-01-01",
+  "fee_per_side": 0.001,
+  "base_slippage_per_side": 0.0005,
+  "portfolio_vol_target": 0.2,
+  "per_coin_cap": 0.25,
+  "result_archives": {
+    "LSTM static": "freqtrade\\validation_runs\\2026_sixcoin\\lstm_static-2026-09-23_06-49-50.zip",
+    "RNN static": "freqtrade\\validation_runs\\2026_sixcoin\\rnn_static-2026-09-23_06-47-02.zip",
+    "Transformer static": "freqtrade\\validation_runs\\2026_sixcoin\\transformer_static-2026-09-23_06-51-45.zip",
+    "Bollinger 40d": "freqtrade\\validation_runs\\2026_sixcoin\\bollinger\\backtest-result-2026-09-23_06-29-51.zip",
+    "GRU static": "freqtrade\\validation_runs\\2026_sixcoin\\gru_static-2026-09-23_06-48-46.zip",
+    "HMM trend defensive": "freqtrade\\validation_runs\\2026_sixcoin\\hmm_trend_defensive-2026-09-23_06-38-48.zip",
+    "HMM trend": "freqtrade\\validation_runs\\2026_sixcoin\\hmm_trend-2026-09-23_06-37-26.zip",
+    "HMM + LSTM static": "freqtrade\\validation_runs\\2026_sixcoin\\hmm_lstm_static-2026-09-23_06-52-57.zip",
+    "HMM defensive": "freqtrade\\validation_runs\\2026_sixcoin\\hmm_defensive-2026-09-23_06-38-36.zip",
+    "HMM switching": "freqtrade\\validation_runs\\2026_sixcoin\\hmm_regime-2026-09-23_06-37-48.zip"
+  }
+}

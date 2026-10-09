@@ -1,0 +1,5 @@
+period,regime,strategy,days,compounded_return,cost_return
+development,high_volatility,momentum,161,0.07096484560143668,0.013552699675390866
+development,low_volatility,mean_reversion,569,-0.12573881211581184,0.036748535122112104
+holdout,high_volatility,momentum,462,-0.12779354869077897,0.06530578157833869
+holdout,low_volatility,mean_reversion,269,-0.09660273997477486,0.02181415406169962

@@ -1,0 +1,28 @@
+{
+  "initial_equity_usdt": 1000000.0,
+  "fee_bps_per_side": 10.0,
+  "slippage_scenarios_bps_per_side": [5.0, 10.0, 20.0, 30.0],
+  "primary_slippage_bps_per_side": 10.0,
+  "market_impact": {
+    "model": "daily_volatility_times_square_root_of_order_over_adv",
+    "coefficient": 1.0,
+    "adv_window_days": 30,
+    "volatility_window_days": 30,
+    "minimum_history_days": 20
+  },
+  "monte_carlo": {
+    "runs": 1000,
+    "block_size_days": 5,
+    "price_return_perturbation_pct": 10.0,
+    "execution_cost_perturbation_pct": 20.0,
+    "random_seed": 42
+  },
+  "quality_gate_reference": "https://waylandz.com/quant-book-en/Lesson-07-Backtest-System-Pitfalls/",
+  "notes": [
+    "Target weights are the frozen six-coin 2026 portfolio outputs; they are not re-optimized for a USD 1 million wallet.",
+    "ADV is a 30-day trailing mean of hourly close times base volume and is shifted one day.",
+    "Daily volatility is a trailing 30-day standard deviation of daily close returns and is shifted one day.",
+    "The square-root impact calculation is a capacity estimate, not an order-book replay.",
+    "No leverage above the original portfolio weights is introduced."
+  ]
+}

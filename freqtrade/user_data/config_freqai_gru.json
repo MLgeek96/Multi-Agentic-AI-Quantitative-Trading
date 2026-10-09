@@ -1,0 +1,87 @@
+{
+  "$schema": "https://schema.freqtrade.io/schema.json",
+  "bot_name": "btc-eth-gru-breakout",
+  "dry_run": true,
+  "dry_run_wallet": 10000,
+  "initial_state": "stopped",
+  "max_open_trades": 2,
+  "stake_currency": "USDT",
+  "stake_amount": 5000,
+  "tradable_balance_ratio": 0.99,
+  "fiat_display_currency": "USD",
+  "timeframe": "1h",
+  "dataformat_ohlcv": "feather",
+  "trading_mode": "futures",
+  "margin_mode": "isolated",
+  "futures_funding_rate": 0,
+  "liquidation_buffer": 0.05,
+  "exchange": {
+    "name": "binanceusdm",
+    "key": "",
+    "secret": "",
+    "ccxt_config": {
+      "urls": {
+        "api": {
+          "fapiPublic": "https://testnet.binancefuture.com/fapi/v1"
+        }
+      }
+    },
+    "ccxt_async_config": {},
+    "pair_whitelist": ["BTC/USDT:USDT", "ETH/USDT:USDT"],
+    "pair_blacklist": []
+  },
+  "pairlists": [{"method": "StaticPairList"}],
+  "entry_pricing": {"price_side": "other", "use_order_book": true, "order_book_top": 1},
+  "exit_pricing": {"price_side": "other", "use_order_book": true, "order_book_top": 1},
+  "unfilledtimeout": {"entry": 10, "exit": 10, "unit": "minutes"},
+  "order_types": {
+    "entry": "market",
+    "exit": "market",
+    "emergency_exit": "market",
+    "force_entry": "market",
+    "force_exit": "market",
+    "stoploss": "market",
+    "stoploss_on_exchange": false
+  },
+  "freqai": {
+    "enabled": true,
+    "identifier": "sequence-gru-baseline-v2-seed42",
+    "train_period_days": 365,
+    "backtest_period_days": 90,
+    "live_retrain_hours": 24,
+    "expiration_hours": 48,
+    "purge_old_models": 2,
+    "save_backtest_models": false,
+    "conv_width": 48,
+    "data_kitchen_thread_count": 2,
+    "feature_parameters": {
+      "include_timeframes": ["1h"],
+      "include_corr_pairlist": [],
+      "label_period_candles": 24,
+      "include_shifted_candles": 0,
+      "indicator_periods_candles": [14],
+      "weight_factor": 0,
+      "principal_component_analysis": false,
+      "use_SVM_to_remove_outliers": false,
+      "DI_threshold": 0,
+      "shuffle_after_split": false
+    },
+    "data_split_parameters": {"test_size": 0.1, "shuffle": false},
+    "model_training_parameters": {
+      "random_seed": 42,
+      "learning_rate": 0.0003,
+      "weight_decay": 0.0001,
+      "model_kwargs": {
+        "cell_type": "GRU",
+        "hidden_dim": 32,
+        "num_layers": 1,
+        "dropout": 0.1
+      },
+      "trainer_kwargs": {
+        "n_epochs": 6,
+        "batch_size": 128,
+        "early_stopping_patience": 2
+      }
+    }
+  }
+}

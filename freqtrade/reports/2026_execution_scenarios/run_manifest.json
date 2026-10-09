@@ -1,0 +1,65 @@
+{
+  "selection_cutoff": "2025-12-31",
+  "neural_train_start": "2025-01-01",
+  "neural_train_end_exclusive": "2026-01-01",
+  "validation_start": "2026-01-01 00:00:00+00:00",
+  "validation_end": "2026-09-17 00:00:00+00:00",
+  "symbols": [
+    "BTC",
+    "ETH",
+    "SOL",
+    "XRP",
+    "BNB",
+    "DOGE"
+  ],
+  "execution_modes": [
+    "futures_long_short",
+    "futures_long_only",
+    "spot_long_only"
+  ],
+  "fee_per_side": 0.001,
+  "portfolio_slippage_per_side": 0.0005,
+  "funding": {
+    "futures_long_short": "observed Binance USD-M funding events",
+    "futures_long_only": "observed Binance USD-M funding events",
+    "spot_long_only": "not applicable"
+  },
+  "result_archives": {
+    "futures_long_short": {
+      "Bollinger 40d": "freqtrade\\validation_runs\\2026_sixcoin\\bollinger\\backtest-result-2026-09-23_06-29-51.zip",
+      "RNN static": "freqtrade\\validation_runs\\2026_sixcoin\\rnn_static-2026-09-23_06-47-02.zip",
+      "GRU static": "freqtrade\\validation_runs\\2026_sixcoin\\gru_static-2026-09-23_06-48-46.zip",
+      "LSTM static": "freqtrade\\validation_runs\\2026_sixcoin\\lstm_static-2026-09-23_06-49-50.zip",
+      "Transformer static": "freqtrade\\validation_runs\\2026_sixcoin\\transformer_static-2026-09-23_06-51-45.zip",
+      "HMM trend": "freqtrade\\validation_runs\\2026_sixcoin\\hmm_trend-2026-09-23_06-37-26.zip",
+      "HMM switching": "freqtrade\\validation_runs\\2026_sixcoin\\hmm_regime-2026-09-23_06-37-48.zip",
+      "HMM defensive": "freqtrade\\validation_runs\\2026_sixcoin\\hmm_defensive-2026-09-23_06-38-36.zip",
+      "HMM trend defensive": "freqtrade\\validation_runs\\2026_sixcoin\\hmm_trend_defensive-2026-09-23_06-38-48.zip",
+      "HMM + LSTM static": "freqtrade\\validation_runs\\2026_sixcoin\\hmm_lstm_static-2026-09-23_06-52-57.zip"
+    },
+    "futures_long_only": {
+      "Bollinger 40d": "freqtrade\\validation_runs\\2026_scenarios\\futures_long_only\\bollinger\\backtest-result-2026-09-23_10-19-12.zip",
+      "RNN static": "freqtrade\\validation_runs\\2026_scenarios\\futures_long_only\\rnn\\backtest-result-2026-09-23_10-19-27.zip",
+      "GRU static": "freqtrade\\validation_runs\\2026_scenarios\\futures_long_only\\gru\\backtest-result-2026-09-23_10-19-40.zip",
+      "LSTM static": "freqtrade\\validation_runs\\2026_scenarios\\futures_long_only\\lstm\\backtest-result-2026-09-23_10-19-54.zip",
+      "Transformer static": "freqtrade\\validation_runs\\2026_scenarios\\futures_long_only\\transformer\\backtest-result-2026-09-23_10-20-04.zip",
+      "HMM trend": "freqtrade\\validation_runs\\2026_scenarios\\futures_long_only\\hmm_trend\\backtest-result-2026-09-23_10-20-14.zip",
+      "HMM switching": "freqtrade\\validation_runs\\2026_scenarios\\futures_long_only\\hmm_switching\\backtest-result-2026-09-23_10-20-24.zip",
+      "HMM defensive": "freqtrade\\validation_runs\\2026_scenarios\\futures_long_only\\hmm_defensive\\backtest-result-2026-09-23_10-20-34.zip",
+      "HMM trend defensive": "freqtrade\\validation_runs\\2026_scenarios\\futures_long_only\\hmm_trend_defensive\\backtest-result-2026-09-23_10-20-44.zip",
+      "HMM + LSTM static": "freqtrade\\validation_runs\\2026_scenarios\\futures_long_only\\hmm_lstm\\backtest-result-2026-09-23_10-21-00.zip"
+    },
+    "spot_long_only": {
+      "Bollinger 40d": "freqtrade\\validation_runs\\2026_scenarios\\spot_long_only\\bollinger\\backtest-result-2026-09-23_10-21-16.zip",
+      "RNN static": "freqtrade\\validation_runs\\2026_scenarios\\spot_long_only\\rnn\\backtest-result-2026-09-23_10-22-06.zip",
+      "GRU static": "freqtrade\\validation_runs\\2026_scenarios\\spot_long_only\\gru\\backtest-result-2026-09-23_10-23-39.zip",
+      "LSTM static": "freqtrade\\validation_runs\\2026_scenarios\\spot_long_only\\lstm\\backtest-result-2026-09-23_10-24-33.zip",
+      "Transformer static": "freqtrade\\validation_runs\\2026_scenarios\\spot_long_only\\transformer\\backtest-result-2026-09-23_10-26-19.zip",
+      "HMM trend": "freqtrade\\validation_runs\\2026_scenarios\\spot_long_only\\hmm_trend\\backtest-result-2026-09-23_10-26-30.zip",
+      "HMM switching": "freqtrade\\validation_runs\\2026_scenarios\\spot_long_only\\hmm_switching\\backtest-result-2026-09-23_10-26-41.zip",
+      "HMM defensive": "freqtrade\\validation_runs\\2026_scenarios\\spot_long_only\\hmm_defensive\\backtest-result-2026-09-23_10-26-52.zip",
+      "HMM trend defensive": "freqtrade\\validation_runs\\2026_scenarios\\spot_long_only\\hmm_trend_defensive\\backtest-result-2026-09-23_10-27-02.zip",
+      "HMM + LSTM static": "freqtrade\\validation_runs\\2026_scenarios\\spot_long_only\\hmm_lstm\\backtest-result-2026-09-23_10-27-56.zip"
+    }
+  }
+}

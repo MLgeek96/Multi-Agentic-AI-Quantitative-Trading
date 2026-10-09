@@ -1,0 +1,18 @@
+[
+  {
+    "symbol": "BTCUSDT",
+    "path": "C:\\Repos\\OneDrive\\Personal Work Repos\\Crypto Trading Strategy Research\\processed\\usdt_futures\\BTCUSDT_1h.csv.gz",
+    "hourly_file_bytes": 2717002,
+    "first_complete_day": "2020-01-01T00:00:00+00:00",
+    "last_complete_day": "2025-12-31T00:00:00+00:00",
+    "complete_days": 2192
+  },
+  {
+    "symbol": "ETHUSDT",
+    "path": "C:\\Repos\\OneDrive\\Personal Work Repos\\Crypto Trading Strategy Research\\processed\\usdt_futures\\ETHUSDT_1h.csv.gz",
+    "hourly_file_bytes": 2721619,
+    "first_complete_day": "2020-01-01T00:00:00+00:00",
+    "last_complete_day": "2025-12-31T00:00:00+00:00",
+    "complete_days": 2192
+  }
+]

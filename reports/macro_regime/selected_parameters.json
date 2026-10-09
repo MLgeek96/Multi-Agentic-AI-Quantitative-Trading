@@ -1,0 +1,8 @@
+{
+  "candidate_id": "macro_regime_08",
+  "feature_set": "macro_volume",
+  "hmm_training_days": 365,
+  "rule_pair": "breakout_flat",
+  "confirmation": "none",
+  "robust_score": -0.6268268221419577
+}

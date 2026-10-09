@@ -1,0 +1,21 @@
+check_id,check_item,status,evidence
+1.1,Data coverage,PASS,Common six-coin history 2020-09-14 to 2026-09-17; more than five years.
+1.2,Adjustment / roll handling,NOT_APPLICABLE,USD-M perpetuals do not expire or require a futures roll; raw exchange candles are used.
+1.3,Survivorship bias,FAIL,The universe contains six currently surviving liquid coins and no delisted-contract history.
+1.4,Timezone alignment,PASS,"Candles, funding, signals, and portfolio dates are normalized to UTC."
+2.1,Look-ahead bias,PARTIAL,"Portfolio weights are lagged one day and principal rule/HMM checks exist, but not every neural variant has a fresh automated look-ahead run."
+2.2,Data leakage,PASS,The primary models are frozen at 2025-12-31 and evaluated on 2026 without refitting.
+2.3,Feature calculation,PARTIAL,"Indicators are causal and execution is delayed, but the entire feature set lacks a single end-to-end mutation test."
+2.4,Label definition,PASS,Future returns are training targets only; they are not available to the live feature matrix.
+3.1,OOS versus training performance,FAIL,"Comparable training-return records are not stored for every final method, so the >50% ratio cannot be verified."
+3.2,Parameter stability +/-20%,FAIL,"Bollinger has a coarse 20/40-day and 1.5/2.0/2.5 grid, not a complete +/-20% stability surface for every parameter and model."
+3.3,Multiple-testing control,FAIL,"Many strategies were explored; no project-wide Bonferroni, deflated-Sharpe, or probability-of-backtest-overfitting correction is complete."
+3.4,Cross-period stability,FAIL,Several models and years fail the stated Sharpe >0.5 requirement.
+4.1,Commission,PASS,The capacity run charges 10 bps per side.
+4.2,Slippage,PASS,"The capacity run reports 5, 10, 20, and 30 bps per-side scenarios."
+4.3,Market impact,PARTIAL,Square-root impact is included; max modeled participation is 0.1293% but no order-book replay is available.
+4.4,Funding costs,PASS,Observed Binance USD-M funding is charged at the portfolio layer.
+5.1,Walk-forward validation,FAIL,"The studies use chronological folds, but the final combined system does not have at least ten rolling validations."
+5.2,Monte Carlo robustness,FAIL,"79.5% of 1,000 block-bootstrap perturbations finish positive; threshold is 90%."
+5.3,Crisis stress test,FAIL,"2020 and 2022 appear in development history, but there is no separate full-system OOS crisis test; 2008 predates crypto."
+5.4,50% return decay,PASS,Halving gross price returns while retaining costs produces 5.73% for Ensemble variable.

@@ -1,0 +1,12 @@
+services:
+  freqtrade:
+    image: freqtradeorg/freqtrade:stable_freqaitorch
+    container_name: crypto-sequence-research
+    volumes:
+      - ./user_data:/freqtrade/user_data
+      - ../processed:/workspace/processed:ro
+    command: >
+      trade
+      --config /freqtrade/user_data/config_baseline.json
+      --strategy BollingerBreakout40D
+

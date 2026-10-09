@@ -1,0 +1,9 @@
+{
+  "mode": "research",
+  "account_key": "crypto-spot-research",
+  "execution_mode": "record_only",
+  "strategy_mode": "adaptive_trend",
+  "daily_config_path": "config/daily_portfolio.json",
+  "state_path": "runtime/crypto_agents.research.sqlite",
+  "report_directory": "runs/agents/research"
+}

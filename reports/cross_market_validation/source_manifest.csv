@@ -1,0 +1,5 @@
+market,symbol,first_complete_day,last_complete_day,complete_common_days,source
+spot,BTCUSDT,2020-01-01,2025-12-31,2177,C:\Users\user\OneDrive\Personal Work Repos\Crypto Trading Strategy Research\processed\spot\BTCUSDT_1h.csv.gz
+spot,ETHUSDT,2020-01-01,2025-12-31,2177,C:\Users\user\OneDrive\Personal Work Repos\Crypto Trading Strategy Research\processed\spot\ETHUSDT_1h.csv.gz
+usdt_futures,BTCUSDT,2020-01-01,2026-09-17,2452,C:\Users\user\OneDrive\Personal Work Repos\Crypto Trading Strategy Research\processed\usdt_futures\BTCUSDT_1h.csv.gz
+usdt_futures,ETHUSDT,2020-01-01,2026-09-17,2452,C:\Users\user\OneDrive\Personal Work Repos\Crypto Trading Strategy Research\processed\usdt_futures\ETHUSDT_1h.csv.gz

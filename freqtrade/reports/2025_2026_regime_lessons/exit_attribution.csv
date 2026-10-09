@@ -1,0 +1,17 @@
+model,exit_reason,trades,net_profit_usdt,mean_net_return
+Bollinger breakout control,middle_band,31,8261.7174804,0.05331629568960691
+Bollinger breakout control,force_exit,2,2485.69331797,0.24846143171454121
+HMM defensive three sleeve,crisis_cash,13,2731.30741688,0.04206661158695687
+HMM defensive three sleeve,mean_reversion_middle,26,2454.44093738,0.01889066096793349
+HMM defensive three sleeve,trend_middle,3,-859.0581267,-0.05722263344521523
+HMM defensive three sleeve,uncertain_cash,79,-5274.96575963,-0.013367475665555123
+HMM defensive trend only,crisis_cash,16,3026.41834641,0.03787378092706273
+HMM defensive trend only,uncertain_cash,39,-1079.11080831,-0.00554479399062657
+HMM defensive trend only,trend_middle,6,-1787.39961763,-0.05957621246673991
+HMM three sleeve,crisis_cash,23,4376.67148659,0.03809346427221769
+HMM three sleeve,mean_reversion_middle,27,2629.8609914,0.01949210599006308
+HMM three sleeve,trend_middle,6,-2010.60570337,-0.06703256588516951
+HMM three sleeve,regime_change,95,-5068.76343187,-0.01068401601961463
+HMM trend only,crisis_cash,24,4598.96840993,0.03836176115480026
+HMM trend only,regime_change,52,-1694.25080398,-0.00652634349692738
+HMM trend only,trend_middle,8,-2466.63729635,-0.0616778191621676

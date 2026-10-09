@@ -1,0 +1,41 @@
+{
+  "$schema": "https://schema.freqtrade.io/schema.json",
+  "bot_name": "sixcoin-2026-validation",
+  "dry_run": true,
+  "dry_run_wallet": 10000,
+  "max_open_trades": 6,
+  "stake_currency": "USDT",
+  "stake_amount": 1666.66666667,
+  "tradable_balance_ratio": 0.99,
+  "timeframe": "1h",
+  "dataformat_ohlcv": "feather",
+  "trading_mode": "futures",
+  "margin_mode": "isolated",
+  "futures_funding_rate": 0,
+  "exchange": {
+    "name": "binanceusdm",
+    "key": "",
+    "secret": "",
+    "enable_ws": false,
+    "ccxt_config": {
+      "urls": {
+        "api": {
+          "fapiPublic": "https://fapi.binance.com/fapi/v1"
+        }
+      }
+    },
+    "ccxt_async_config": {},
+    "pair_whitelist": [
+      "BTC/USDT:USDT",
+      "ETH/USDT:USDT",
+      "SOL/USDT:USDT",
+      "XRP/USDT:USDT",
+      "BNB/USDT:USDT",
+      "DOGE/USDT:USDT"
+    ],
+    "pair_blacklist": []
+  },
+  "pairlists": [
+    {"method": "StaticPairList"}
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "mode": "demo",
+  "account_key": "crypto-demo",
+  "execution_mode": "record_only",
+  "strategy_mode": "adaptive_trend",
+  "daily_config_path": "config/daily_portfolio.json",
+  "state_path": "runtime/crypto_agents.demo.sqlite",
+  "report_directory": "runs/agents/demo"
+}

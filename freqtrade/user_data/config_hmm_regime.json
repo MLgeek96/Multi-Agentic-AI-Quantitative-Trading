@@ -1,0 +1,40 @@
+{
+  "$schema": "https://schema.freqtrade.io/schema.json",
+  "bot_name": "btc-eth-hmm-regime",
+  "dry_run": true,
+  "dry_run_wallet": 10000,
+  "initial_state": "stopped",
+  "max_open_trades": 2,
+  "stake_currency": "USDT",
+  "stake_amount": 5000,
+  "tradable_balance_ratio": 0.99,
+  "fiat_display_currency": "USD",
+  "timeframe": "1h",
+  "dataformat_ohlcv": "feather",
+  "trading_mode": "futures",
+  "margin_mode": "isolated",
+  "futures_funding_rate": 0,
+  "liquidation_buffer": 0.05,
+  "exchange": {
+    "name": "binanceusdm",
+    "key": "",
+    "secret": "",
+    "ccxt_config": {"urls": {"api": {"fapiPublic": "https://testnet.binancefuture.com/fapi/v1"}}},
+    "ccxt_async_config": {},
+    "pair_whitelist": ["BTC/USDT:USDT", "ETH/USDT:USDT"],
+    "pair_blacklist": []
+  },
+  "pairlists": [{"method": "StaticPairList"}],
+  "entry_pricing": {"price_side": "other", "use_order_book": true, "order_book_top": 1},
+  "exit_pricing": {"price_side": "other", "use_order_book": true, "order_book_top": 1},
+  "unfilledtimeout": {"entry": 10, "exit": 10, "unit": "minutes"},
+  "order_types": {
+    "entry": "market",
+    "exit": "market",
+    "emergency_exit": "market",
+    "force_entry": "market",
+    "force_exit": "market",
+    "stoploss": "market",
+    "stoploss_on_exchange": false
+  }
+}
