@@ -1,15 +1,20 @@
-# Private GitHub repository
+# GitHub repository
 
 Target: `bakapig/Multi-Agentic-AI-Quantitative-Trading`.
+
+Verified on 14 October 2026: the existing repository is **public**. This file's
+name reflects the original private-repository setup plan. Later uploads use the
+existing repository without changing visibility. Check its current visibility
+with `gh repo view bakapig/Multi-Agentic-AI-Quantitative-Trading --json visibility,url`.
 
 This checkout contains source, configuration, tests and research reports. Raw data,
 processed caches, virtual environments, trained models, backtest blobs, runtime
 databases, agent/LLM transcripts, credentials and scratch directories are excluded.
 Required assignment ledgers already in `live/` can be versioned; market-data caches
-and logs are ignored. Private visibility grants access only to authorized accounts;
-secrets must still stay out of commits.
+and logs are ignored. Presentation build scratch and generated chart workbooks
+also remain local. Credentials must stay out of commits regardless of visibility.
 
-Initial publication from the project directory:
+Historical initial setup reference (already completed; do not rerun):
 
 ```powershell
 gh auth status

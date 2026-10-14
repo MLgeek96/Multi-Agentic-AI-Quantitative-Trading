@@ -22,6 +22,9 @@ freqtrade/reports/**/visualization_preview.html
 runtime/
 runs/
 .codex_build/
+.codex-build/
+.chart-data-*/
+node_modules/
 .codex_work/
 outputs/
 .env

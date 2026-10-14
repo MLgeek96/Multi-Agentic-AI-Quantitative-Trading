@@ -1,0 +1,206 @@
+<div id="three-pm-fund">
+  <h2>Three PMs, one USD 5m paper fund</h2>
+  <div class="text-small text-muted">Design preview · illustrative capital mandates · pairs frequency confirmed: daily</div>
+  <div class="nav nav-pills" role="tablist" aria-label="Fund design views">
+    <button class="nav-link active" id="pm-structure-tab" role="tab" aria-controls="pm-structure-panel" aria-selected="true" type="button">Fund + AI roles</button>
+    <button class="nav-link" id="pm-daily-tab" role="tab" aria-controls="pm-daily-panel" aria-selected="false" type="button">Daily pairs cycle</button>
+  </div>
+
+  <div id="pm-structure-panel" role="tabpanel" aria-labelledby="pm-structure-tab">
+    <figure class="allocation-figure">
+      <figcaption class="text-small">Initial capital allocation</figcaption>
+      <div class="allocation-bar" role="img" aria-label="Momentum 30 percent, pairs 30 percent, crypto 30 percent, central cash 10 percent">
+        <span style="width:30%;background:var(--viz-series-1)"></span>
+        <span style="width:30%;background:var(--viz-series-2)"></span>
+        <span style="width:30%;background:var(--viz-series-3)"></span>
+        <span style="width:10%;background:var(--muted)"></span>
+      </div>
+      <div class="allocation-labels text-small tabular-nums">
+        <span><i style="background:var(--viz-series-1)"></i>Momentum $1.5m</span>
+        <span><i style="background:var(--viz-series-2)"></i>Pairs $1.5m</span>
+        <span><i style="background:var(--viz-series-3)"></i>Crypto $1.5m</span>
+        <span><i style="background:var(--muted)"></i>Cash $0.5m</span>
+      </div>
+    </figure>
+    <div class="fund-diagram" data-diagram></div>
+    <div class="viz-controls" aria-label="Select a PM to inspect">
+      <button class="btn" type="button" data-pm="momentum" aria-pressed="false">Momentum PM</button>
+      <button class="btn" type="button" data-pm="pairs" aria-pressed="true">Pairs PM · daily</button>
+      <button class="btn" type="button" data-pm="crypto" aria-pressed="false">Crypto PM</button>
+    </div>
+    <div class="card pm-detail" aria-live="polite" aria-atomic="true">
+      <div class="detail-title" data-detail-title>Pairs PM · $1.5m initial mandate</div>
+      <div class="text-small text-muted" data-frequency>Strategy cadence: daily, after a completed trading session</div>
+      <div class="detail-grid">
+        <div><div class="text-small text-muted">AI chooses diagnostic tools</div><ul data-tools></ul></div>
+        <div><div class="text-small text-muted">Quant engine computes</div><ul data-quant></ul></div>
+        <div><div class="text-small text-muted">PM submits to the fund</div><ul data-output></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="pm-daily-panel" role="tabpanel" aria-labelledby="pm-daily-tab" hidden>
+    <h3>One decision cycle per equity trading day</h3>
+    <ol class="daily-steps">
+      <li><span class="step-time text-small">Session t<br>after close</span><div><div class="step-title">Validate completed market data</div><div class="text-small text-muted">Prices · session calendar · timestamps · missing data</div></div><span class="step-owner text-small">Data adapter</span></li>
+      <li><span class="step-time text-small">Session t<br>after close</span><div><div class="step-title">Run the teammate’s daily pairs algorithm</div><div class="text-small text-muted">Existing update rule → spread signal → linked target legs</div></div><span class="step-owner text-small">Quant engine</span></li>
+      <li><span class="step-time text-small">Before<br>execution</span><div><div class="step-title">Combine proposals and check the fund</div><div class="text-small text-muted">Budgets · overlapping holdings · gross/net exposure · cash/margin</div></div><span class="step-owner text-small">Coordinator<br>+ Risk</span></li>
+      <li><span class="step-time text-small">Next eligible<br>session</span><div><div class="step-title">Simulate approved orders at a later tradable price</div><div class="text-small text-muted">Both pair legs · explicit fill assumption · costs charged once</div></div><span class="step-owner text-small">Paper executor</span></li>
+      <li><span class="step-time text-small">Session t+1<br>after close</span><div><div class="step-title">Mark positions and reconcile the fund</div><div class="text-small text-muted">PM NAVs + central cash → fund NAV · closing-price CSV</div></div><span class="step-owner text-small">Accounting</span></li>
+    </ol>
+    <hr>
+    <div class="ai-lane">
+      <span class="viz-badge">AI PM lane</span>
+      <div class="ai-lane-flow"><span>Read saved proposals</span><span aria-hidden="true">→</span><span>Choose diagnostics</span><span aria-hidden="true">→</span><span>Cite evidence in PM memo</span></div>
+      <div class="text-small text-muted">Optional reviewer checks memos · AI failure leaves the coded trading cycle running</div>
+    </div>
+    <div class="cycle-key text-small">
+      <span><i data-lucide="calendar-days" aria-hidden="true"></i>t+1 = next eligible trading session</span>
+      <span><i data-lucide="link" aria-hidden="true"></i>Pair legs retain their hedge relationship</span>
+      <span><i data-lucide="clock" aria-hidden="true"></i>Daily signals can produce no trade</span>
+    </div>
+  </div>
+</div>
+
+<style>
+#three-pm-fund { color:var(--foreground); }
+#three-pm-fund h2 { padding-right:90px; }
+#three-pm-fund .nav { margin:18px 0 14px; }
+#three-pm-fund figure { margin:0; }
+#three-pm-fund .allocation-bar { display:flex; height:13px; gap:3px; margin:8px 0; }
+#three-pm-fund .allocation-bar span { display:block; min-width:0; }
+#three-pm-fund .allocation-labels { display:flex; flex-wrap:wrap; gap:8px 20px; }
+#three-pm-fund .allocation-labels span { display:inline-flex; align-items:center; gap:6px; }
+#three-pm-fund .allocation-labels i { display:block; width:9px; height:9px; }
+#three-pm-fund .fund-diagram { width:100%; margin:14px 0 8px; }
+#three-pm-fund .fund-diagram svg { display:block; width:100%; }
+#three-pm-fund .diagram-label { font-size:12px; fill:var(--foreground); font-weight:500; }
+#three-pm-fund .diagram-secondary { font-size:12px; fill:var(--muted-foreground); font-weight:400; }
+#three-pm-fund .diagram-line { stroke:var(--border); stroke-width:1.5; fill:none; }
+#three-pm-fund .pm-detail { margin-top:12px; }
+#three-pm-fund .detail-title { font-weight:500; margin-bottom:4px; }
+#three-pm-fund .detail-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-top:14px; }
+#three-pm-fund .detail-grid ul { margin:6px 0 0; padding-left:18px; }
+#three-pm-fund .detail-grid li { margin-bottom:5px; }
+#three-pm-fund .daily-steps { list-style:none; padding:0; margin:14px 0 20px; }
+#three-pm-fund .daily-steps li { display:grid; grid-template-columns:90px minmax(0,1fr) 105px; gap:14px; align-items:start; padding:15px 0; border-bottom:1px solid var(--border); }
+#three-pm-fund .step-time { color:var(--muted-foreground); }
+#three-pm-fund .step-title { font-weight:500; margin-bottom:5px; }
+#three-pm-fund .step-owner { color:var(--muted-foreground); text-align:right; }
+#three-pm-fund .ai-lane { margin:16px 0; }
+#three-pm-fund .ai-lane-flow { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:10px 0 6px; }
+#three-pm-fund .cycle-key { display:flex; flex-wrap:wrap; gap:10px 22px; margin-top:18px; color:var(--muted-foreground); }
+#three-pm-fund .cycle-key span { display:inline-flex; gap:6px; align-items:center; }
+@media (max-width:560px) {
+  #three-pm-fund .detail-grid { grid-template-columns:1fr; gap:14px; }
+  #three-pm-fund .daily-steps li { grid-template-columns:72px minmax(0,1fr); gap:10px; }
+  #three-pm-fund .step-owner { grid-column:2; text-align:left; }
+}
+</style>
+
+<script>
+(() => {
+  const root = document.getElementById('three-pm-fund');
+  const diagram = root.querySelector('[data-diagram]');
+  const roles = {
+    momentum: {
+      name:'Momentum PM', frequency:'Strategy cadence: to confirm with the momentum owner',
+      tools:['Inspect rankings and signal reasons','Inspect sector and stock exposure','Review recent trades and costs'],
+      quant:['Momentum scores and eligibility','Target holdings and position sizes','Rolling model updates under fixed rules'],
+      output:['Quantitative target portfolio','Evidence-linked PM memo','Diagnostic concerns for review']
+    },
+    pairs: {
+      name:'Pairs PM', frequency:'Strategy cadence: daily, after a completed trading session',
+      tools:['Inspect today’s pair signal','Inspect spread and pair-health diagnostics','Inspect hedge ratio and both legs'],
+      quant:['Spread signal from existing algorithm','Hedge relationship and target legs','Daily estimates under the existing update rule'],
+      output:['Linked two-leg portfolio proposal','Evidence-linked PM memo','Pair-health concerns for review']
+    },
+    crypto: {
+      name:'Crypto PM', frequency:'Strategy cadence: daily proposed for the first integrated version',
+      tools:['Inspect crypto signals and cash holdings','Inspect volatility and liquidity','Review fees and recent attribution'],
+      quant:['Signals from selected crypto strategy','Exposure and position sizes','Costs and portfolio performance'],
+      output:['Quantitative crypto target portfolio','Evidence-linked PM memo','Data and liquidity concerns for review']
+    }
+  };
+  let state = {pm:'pairs',view:'structure'};
+  const restore = value => {
+    const p = value && value.privateContent;
+    if (p && roles[p.pm]) state.pm = p.pm;
+    if (p && ['structure','daily'].includes(p.view)) state.view = p.view;
+  };
+  restore(window.openai && window.openai.widgetState);
+  const save = () => {
+    if (window.openai && window.openai.setWidgetState) window.openai.setWidgetState({
+      modelContent:{selectedPM:state.pm,pairsFrequency:'daily',initialFundUSD:5000000,view:state.view},
+      privateContent:{...state}
+    }).catch(() => {});
+  };
+  const escape = value => String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const list = (selector,items) => { root.querySelector(selector).innerHTML = items.map(x=>'<li>'+escape(x)+'</li>').join(''); };
+  const text = (x,y,label,secondary=false) => '<text x="'+x+'" y="'+y+'" text-anchor="middle" class="'+(secondary?'diagram-secondary':'diagram-label')+'">'+escape(label)+'</text>';
+  const box = (x,y,w,h,lines,fill='var(--card)') => '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="8" fill="'+fill+'" stroke="var(--border)"/>'+lines.map((l,i)=>text(x+w/2,y+23+i*19,l,i>0)).join('');
+  const line = (x1,y1,x2,y2) => '<path d="M '+x1+' '+y1+' L '+x2+' '+y2+'" class="diagram-line"/>';
+  function draw() {
+    const w = Math.max(280,Math.round(diagram.getBoundingClientRect().width));
+    const narrow = w < 560;
+    const mid = w/2;
+    let parts = [];
+    const topWidth = Math.min(w-12,330);
+    parts.push(box(mid-topWidth/2,0,topWidth,63,['Portfolio Coordinator · code','Assign budgets + aggregate targets']));
+    const ids = ['momentum','pairs','crypto'];
+    let pmBottom;
+    if (!narrow) {
+      const bw=(w-24)/3;
+      const cy=88;
+      parts.push(line(mid,63,mid,cy),line(bw/2,cy,w-bw/2,cy));
+      ids.forEach((id,i)=>{
+        const x=i*(bw+12);
+        parts.push(line(x+bw/2,cy,x+bw/2,105));
+        const fill='color-mix(in srgb,var(--viz-series-'+(i+1)+') '+(state.pm===id?'19':'9')+'%,var(--background))';
+        parts.push(box(x,105,bw,95,[roles[id].name+' · $1.5m','AI + quantitative engine',id==='pairs'?'Daily · confirmed':id==='crypto'?'Daily · proposed':'Cadence · to confirm'],fill));
+        parts.push(line(x+bw/2,200,x+bw/2,223));
+      });
+      parts.push(line(bw/2,223,w-bw/2,223));
+      pmBottom=223;
+    } else {
+      const bw=w-46;
+      parts.push(line(14,82,mid,82),line(mid,63,mid,82),line(14,82,14,420));
+      ids.forEach((id,i)=>{
+        const y=102+i*110;
+        const fill='color-mix(in srgb,var(--viz-series-'+(i+1)+') '+(state.pm===id?'19':'9')+'%,var(--background))';
+        parts.push(line(14,y+45,30,y+45));
+        parts.push(box(30,y,bw,90,[roles[id].name+' · $1.5m','AI + quantitative engine',id==='pairs'?'Daily · confirmed':id==='crypto'?'Daily · proposed':'Cadence · to confirm'],fill));
+      });
+      parts.push(line(14,420,mid,420));
+      pmBottom=420;
+    }
+    const riskY=pmBottom+25;
+    parts.push(line(mid,pmBottom,mid,riskY));
+    parts.push(box(mid-topWidth/2,riskY,topWidth,63,['Risk Controller · code','Exposure, cash/margin + data checks']));
+    parts.push(line(mid,riskY+63,mid,riskY+91));
+    parts.push(box(mid-topWidth/2,riskY+91,topWidth,63,['Paper execution + accounting','Approved targets → simulated fills']));
+    parts.push(text(mid,riskY+183,'PM ledgers + fund NAV + decision history',true));
+    const h=riskY+199;
+    diagram.innerHTML='<svg viewBox="0 0 '+w+' '+h+'" height="'+h+'" role="img" aria-label="Fund structure: coordinator assigns capital to three PMs. Each PM combines an AI representative and quantitative engine. Quantitative proposals pass risk checks before paper execution and accounting."><title>Three PM fund architecture</title>'+parts.join('')+'</svg>';
+  }
+  function render() {
+    const role=roles[state.pm];
+    root.querySelector('[data-detail-title]').textContent=role.name+' · $1.5m initial mandate';
+    root.querySelector('[data-frequency]').textContent=role.frequency;
+    list('[data-tools]',role.tools); list('[data-quant]',role.quant); list('[data-output]',role.output);
+    root.querySelectorAll('[data-pm]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.pm===state.pm)));
+    ['structure','daily'].forEach(id=>{
+      const tab=root.querySelector('#pm-'+id+'-tab');
+      const panel=root.querySelector('#pm-'+id+'-panel');
+      const active=id===state.view;
+      tab.setAttribute('aria-selected',String(active)); tab.classList.toggle('active',active); panel.hidden=!active;
+    });
+    if(state.view==='structure') draw();
+  }
+  root.querySelectorAll('[data-pm]').forEach(button=>button.addEventListener('click',()=>{state.pm=button.dataset.pm;render();save();}));
+  root.querySelectorAll('[role="tab"]').forEach(button=>button.addEventListener('click',()=>{state.view=button.id==='pm-daily-tab'?'daily':'structure';requestAnimationFrame(()=>{render();save();});}));
+  window.addEventListener('openai:set_globals',event=>{restore(event.detail && event.detail.globals && event.detail.globals.widgetState);render();});
+  new ResizeObserver(()=>{if(state.view==='structure')draw();}).observe(diagram);
+  render();
+})();
+</script>

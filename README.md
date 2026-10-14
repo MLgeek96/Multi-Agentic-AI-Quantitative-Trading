@@ -1,5 +1,14 @@
 # Crypto Trading Strategy Research
 
+## FE5209 three-PM project design
+
+The [presentation index](presentations/README.md) links the expanded 12-slide
+PowerPoint, PDF preview, earlier short deck and interactive fund explainer.
+The proposed USD 5 million paper fund combines equity momentum, daily pairs
+trading and crypto PMs. Each PM has a quantitative engine and a planned AI
+representative with diagnostic tools. The combined fund and connected AI PMs
+remain proposed work; the existing crypto implementation is described below.
+
 ## Local multi-agent research architecture
 
 The BURSA-style local agent implementation is documented in
@@ -16,7 +25,7 @@ authority; generated intents never create exchange orders or paper fills.
 The research date replays the existing September daily cache. The new data-quality
 gate also protects the separate daily paper runner and rejects stale/corrupt data.
 See [`reports/agents/implementation_report.md`](reports/agents/implementation_report.md)
-for verified results and [`GITHUB_PRIVATE.md`](GITHUB_PRIVATE.md) for private-repo
+for verified results and [`GITHUB_PRIVATE.md`](GITHUB_PRIVATE.md) for repository
 setup and future pushes. Neither these changes nor a successful demo activates the
 October daily schedule.
 
