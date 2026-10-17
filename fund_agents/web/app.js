@@ -1,264 +1,345 @@
 'use strict';
 
 const $ = selector => document.querySelector(selector);
-const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const numeric = value => typeof value === 'number' && Number.isFinite(value);
-const money = value => numeric(value) ? new Intl.NumberFormat('en-US', {style:'currency', currency:'USD', maximumFractionDigits:0}).format(value) : '—';
-const compact = value => !numeric(value) ? '—' : Math.abs(value) >= 1e6 ? `$${(value / 1e6).toFixed(2)}m` : money(value);
-const percent = value => numeric(value) ? `${(value * 100).toFixed(1)}%` : '—';
-const decimal = (value, digits=2) => numeric(value) ? value.toLocaleString('en-US', {maximumFractionDigits:digits, minimumFractionDigits:digits}) : '—';
-const human = value => String(value ?? 'unavailable').replaceAll('_', ' ').toLowerCase();
-const badge = (label, tone='neutral') => `<span class="pill ${tone}">${escapeHtml(label)}</span>`;
-const statusBadge = status => badge(human(status).toUpperCase(), ['READY','REVIEWED','PASS','INTENTS_RECORDED'].includes(status) ? 'good' : ['INPUT_HOLD','RISK_VETO','BREAKER_LATCHED','REJECTED'].includes(status) ? 'bad' : 'neutral');
-const jsonDetails = (label, value) => `<details><summary class="detail-summary">${escapeHtml(label)}</summary><pre class="json">${escapeHtml(JSON.stringify(value, null, 2))}</pre></details>`;
-const empty = message => `<div class="empty">${escapeHtml(message)}</div>`;
-const gross = group => (group.legs || []).reduce((sum, leg) => sum + Math.abs(leg.units * leg.price_usd), 0);
-const sumGross = groups => groups.reduce((sum, group) => sum + gross(group), 0);
-const pmTitle = pm => pm === 'crypto' ? 'Crypto PM' : pm === 'pairs' ? 'Pairs PM' : 'Momentum PM';
-const views = {
-  overview: ['Fund overview', 'One view of your capital, managers, and independent risk controls.'],
-  risk: ['Risk monitor', 'Trace every target through capital, concentration, and drawdown controls.'],
-  pms: ['Portfolio managers', 'From strategy evidence to signed targets, with each manager in focus.'],
-  flow: ['System flow', 'Follow the connections from market inputs to the permanent decision record.'],
-  audit: ['Decision ledger', 'Inspect the evidence, approvals, and linked intentions behind this cycle.']
+const money = value => numeric(value) ? new Intl.NumberFormat('en-US', {style:'currency',currency:'USD',maximumFractionDigits:0}).format(Math.abs(value)<.5?0:value) : '—';
+const compact = value => !numeric(value) ? '—' : Math.abs(value) >= 1e6 ? `$${(value/1e6).toFixed(2)}m` : money(value);
+const pct = value => numeric(value) ? `${(value*100).toFixed(1)}%` : '—';
+const decimal = (value, digits=2) => numeric(value) ? (Math.abs(value)<.5*10**(-digits)?0:value).toLocaleString('en-US',{maximumFractionDigits:digits,minimumFractionDigits:digits}) : '—';
+const human = value => String(value || 'unavailable').replaceAll('_',' ').toLowerCase();
+const pmTitle = pm => ({pairs:'Pairs PM',momentum:'Momentum PM'}[pm] || pm);
+const basis = mode => mode === 'demo' ? 'Synthetic demo' : 'Historical replay';
+const paths = {
+  overview:'<rect x="3" y="3" width="7" height="7" rx="1.3"/><rect x="14" y="3" width="7" height="7" rx="1.3"/><rect x="3" y="14" width="7" height="7" rx="1.3"/><rect x="14" y="14" width="7" height="7" rx="1.3"/>',
+  managers:'<circle cx="9" cy="7" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 4a3 3 0 0 1 0 6M21 21v-3a6 6 0 0 0-4-5"/>',
+  shield:'<path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6Z"/><path d="m8 12 3 3 5-6"/>',
+  committee:'<path d="M8 3h8v4H8zM12 7v5M5 12h14M5 12v4M19 12v4M12 12v4"/><rect x="2" y="16" width="6" height="5" rx="1"/><rect x="9" y="16" width="6" height="5" rx="1"/><rect x="16" y="16" width="6" height="5" rx="1"/>',
+  flow:'<rect x="2" y="8" width="6" height="8" rx="1"/><rect x="16" y="2" width="6" height="6" rx="1"/><rect x="16" y="16" width="6" height="6" rx="1"/><path d="M8 12h4V5h4M12 12v7h4"/>',
+  ledger:'<path d="M5 3h14v18H5zM8 7h8M8 11h8M8 15h5"/>',
+  compass:'<circle cx="12" cy="12" r="9"/><path d="m16 8-2 6-6 2 2-6Z"/>',
+  lock:'<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/>',
+  search:'<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>',
+  refresh:'<path d="M20 7v5h-5M4 17v-5h5M6 7a7 7 0 0 1 12-2l2 3M4 16l2 3a7 7 0 0 0 12-2"/>',
+  download:'<path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/>',
+  calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v5M16 3v5"/>',
+  close:'<path d="m6 6 12 12M6 18 18 6"/>',
+  menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
+  chart:'<path d="M4 3v18h17M8 16l4-6 4 3 5-8"/>',
+  wallet:'<rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 7V4l14-2v3M16 11h5v5h-5z"/>',
+  check:'<path d="m5 12 4 4L19 6"/>',
+  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/>',
+  layers:'<path d="m12 2 10 6-10 6L2 8ZM2 13l10 6 10-6M2 18l10 6 10-6"/>',
+  pair:'<path d="M3 7h17l-4-4M21 17H4l4 4M20 7l-4 4M4 17l4-4"/>',
 };
-let report = null;
-let selectedId = null;
-let reportList = [];
-let indexWarnings = [];
-let activeNode = 'risk';
-let activePair = 0;
-let loading = false;
-
-async function getJson(url) {
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`Could not load saved report (${response.status}).`);
-  return response.json();
-}
-
-async function loadReports() {
-  if (loading) return;
-  loading = true;
-  $('#refresh').disabled = true;
-  try {
-    const data = await getJson('/api/reports');
-    reportList = data.reports;
-    indexWarnings = data.warnings;
-    $('#cycle-select').innerHTML = reportList.map((r, i) => `<option value="${escapeHtml(r.id)}">${escapeHtml(`${r.mode === 'demo' ? 'Demo' : 'Historical'} · ${r.as_of} · ${r.cycle_id.slice(0,8)}${i === 0 ? ' · latest saved' : ''}`)}</option>`).join('');
-    if (!reportList.length) {
-      report = null;
-      selectedId = null;
-      $('#export').disabled = true;
-      $('#mode-badge').innerHTML = 'NO REPORTS';
-      $('#source-note').textContent = 'No saved coordinator cycles found.';
-      $('#content').innerHTML = empty('Generate a demonstration with python -m fund_agents, then refresh reports. You can also select a custom report directory using --reports when starting the dashboard.') + (indexWarnings.length ? jsonDetails('Skipped report details', indexWarnings) : '');
-      return;
-    }
-    selectedId = reportList.some(r => r.id === selectedId) ? selectedId : reportList[0].id;
-    $('#cycle-select').value = selectedId;
-    await loadSelected();
-  } catch (error) { showError(error); }
-  finally { loading = false; $('#refresh').disabled = false; }
-}
-
-async function loadSelected() {
-  $('#cycle-select').disabled = true;
-  $('#export').disabled = true;
-  try {
-    const next = await getJson(`/api/report?id=${encodeURIComponent(selectedId)}`);
-    report = next;
-    activePair = 0;
-    $('#mode-badge').textContent = report.mode === 'demo' ? 'SYNTHETIC DEMO' : 'HISTORICAL REPLAY';
-    $('#mode-badge').className = `pill ${report.mode === 'demo' ? 'warn' : 'neutral'}`;
-    const generated = new Date(report.generated_at_utc).toLocaleString('en-GB', {timeZone:'Asia/Singapore', day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:false});
-    $('#source-note').innerHTML = `<b>Valuation date ${escapeHtml(report.as_of)}</b> · ${report.mode === 'demo' ? 'Invented market inputs' : 'Saved historical inputs'} · Generated ${escapeHtml(generated)} SGT. This is a saved snapshot; it does not establish current market coverage.${indexWarnings.length ? ` ${indexWarnings.length} unreadable report(s) skipped.` : ''}`;
-    $('#footer-cycle').textContent = `Cycle ${report.cycle_id.slice(0,8)} · ${report.config.account_key}`;
-    $('#export').disabled = false;
-    render();
-  } catch (error) { showError(error); }
-  finally { $('#cycle-select').disabled = false; }
-}
-
-function showError(error) {
-  report = null;
-  $('#export').disabled = true;
-  $('#mode-badge').textContent = 'CONNECTION ERROR';
-  $('#source-note').textContent = 'Report data unavailable. Refresh to reconnect.';
-  $('#content').innerHTML = `<div class="empty error">${escapeHtml(error.message)} Check that the local dashboard server is running, then refresh reports.</div>`;
-}
+const icon = name => `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.info}</svg>`;
+function hydrateIcons(root=document) { root.querySelectorAll('[data-icon]').forEach(el => { el.innerHTML=icon(el.dataset.icon); }); }
+const badge = (label,tone='neutral') => `<span class="pill ${tone}">${esc(label)}</span>`;
+const statusBadge = status => badge(human(status).toUpperCase(),['READY','REVIEWED','PASS','INTENTS_RECORDED','STRUCTURED_CLAIMS_VALIDATED'].includes(status)?'good':['INPUT_HOLD','RISK_VETO','BREAKER_LATCHED','REJECTED'].includes(status)?'bad':'neutral');
+const details = (label,value) => `<details><summary class="detail-summary">${esc(label)}</summary><pre class="json">${esc(JSON.stringify(value,null,2))}</pre></details>`;
+const empty = text => `<div class="empty">${esc(text)}</div>`;
+const note = text => `<div class="boundary-note">${icon('info')}<span>${esc(text)}</span></div>`;
+const heading = (title,right='') => `<div class="section-heading"><h2>${esc(title)}</h2>${right}</div>`;
+const panel = (title,body,right='',extra='') => `<section class="panel ${extra}">${heading(title,right)}${body}</section>`;
+const foot = text => `<div class="panel-foot">${esc(text)}</div>`;
+const gross = group => (group.legs||[]).reduce((sum,l) => sum+Math.abs(l.units*l.price_usd),0);
+const sumGross = groups => (groups||[]).reduce((sum,g)=>sum+gross(g),0);
+const views = {
+  overview:['Overview','A clear view of your fund, its managers, and every proposed decision.','overview'],
+  pms:['Portfolio managers','Understand each strategy, inspect its signals, and follow the proposed positions.','managers'],
+  risk:['Risk & protection','See what the managers proposed, what risk approved, and what changed.','shield'],
+  committee:['Committee review','Follow the PM evidence and the Investment Committee Chair’s recorded review.','committee'],
+  flow:['System flow','Follow the two lanes from market data to an inspectable investment decision.','flow'],
+  audit:['Decision ledger','A saved trail of inputs, approvals, and linked intentions for this cycle.','ledger'],
+};
+let report=null,reportList=[],selectedId=new URLSearchParams(location.search).get('cycle'),indexWarnings=[];
+let modeFilter='all',activePair=0,activeNode='risk',loading=false,loadGeneration=0,tourIndex=0,toastTimer,managerFocus=null;
 
 function context() {
-  const risk = report.fund_risk;
-  const metrics = risk.metrics || {};
-  const cfg = report.config;
-  const snapshot = report.portfolio_before;
-  const groups = risk.approved_groups || [];
-  const nav = numeric(metrics.marked_nav_usd) ? metrics.marked_nav_usd : null;
-  const peak = Math.max(snapshot.peak_nav_usd || 0, risk.state?.peak_nav_usd || 0);
-  const drawdown = nav !== null && peak > 0 ? Math.max(0, 1 - nav / peak) : null;
-  const names = {};
-  groups.forEach(g => (g.legs || []).forEach(l => { names[l.symbol] = (names[l.symbol] || 0) + Math.abs(l.units * l.price_usd); }));
-  const largestName = nav ? Math.max(0, ...Object.values(names)) / nav : null;
-  return {risk,metrics,cfg,snapshot,groups,nav,drawdown,names,largestName};
+  const risk=report.fund_risk||{},cfg=report.config||{},snapshot=report.portfolio_before||{},metrics=risk.metrics||{};
+  const groups=risk.approved_groups||[],phantom=risk.phantom_book;
+  const nav=numeric(metrics.marked_nav_usd)?metrics.marked_nav_usd:null;
+  const peaks=[snapshot.peak_nav_usd,risk.state?.peak_nav_usd].filter(numeric),peak=peaks.length?Math.max(...peaks):null;
+  const drawdown=nav!==null&&peak>0?Math.max(0,1-nav/peak):null;
+  const names={}; groups.forEach(g=>(g.legs||[]).forEach(l=>{names[l.symbol]=(names[l.symbol]||0)+Math.abs(l.units*l.price_usd);}));
+  const largestName=nav&&groups.length?Math.max(0,...Object.values(names))/nav:nav&&risk.status==='REVIEWED'?0:null;
+  const softActive=phantom?.soft_throttle_active===true||(risk.alerts||[]).includes('SOFT_DRAWDOWN_THROTTLE');
+  const envelope=cfg.risk_envelope==='conservative'?.75:1;
+  const effectiveCap=numeric(cfg.maximum_fund_gross)&&(!softActive||numeric(cfg.soft_drawdown_scale))?cfg.maximum_fund_gross*envelope*(softActive?cfg.soft_drawdown_scale:1):null;
+  return {risk,cfg,snapshot,metrics,groups,phantom,nav,drawdown,names,largestName,softActive,effectiveCap};
 }
 
-function metric(label, value, sub, icon='↗') {
-  return `<div class="metric"><div class="metric-label">${label}<span>${icon}</span></div><div class="metric-value">${value}</div><div class="metric-sub">${sub}</div></div>`;
+async function getJson(url) {
+  const response=await fetch(url); if(!response.ok)throw new Error(`Saved evidence could not be loaded (${response.status}).`);
+  return response.json();
 }
-
-function metricsPanel() {
-  const {metrics,nav,risk,drawdown,cfg,snapshot} = context();
-  return `<div class="metric-grid">
-    ${metric('Marked fund NAV', money(nav), nav === null ? 'Unavailable · valuation held' : `${snapshot.holdings.length === 0 ? 'Cash-only supplied account' : 'From confirmed account snapshot'} · USD`, '◈')}
-    ${metric('Approved target gross', percent(metrics.target_gross_fraction), `${money(metrics.target_gross_usd)} <span class="muted">/ ${percent(cfg.maximum_fund_gross)} fund limit</span>`, '↗')}
-    ${metric('Fund drawdown', percent(drawdown), `${risk.state?.breaker_latched ? '<span class="negative">Breaker latched</span>' : 'Snapshot vs. recorded peak'} · ${percent(cfg.maximum_drawdown)} breaker`, '◇')}
-    ${metric('Recorded intent groups', String((report.execution_receipts || []).length), `${numeric(metrics.filled_orders) ? metrics.filled_orders : '—'} fills · <span class="positive">record-only execution</span>`, '≡')}
-  </div>`;
+function clearReport(message,isError=false,invalidate=true) {
+  report=null;if(invalidate)loadGeneration++;$('#brief-export').disabled=true;
+  $('#mode-badge').textContent=isError?'CONNECTION ERROR':'NO SAVED CYCLES';
+  $('#mode-badge').className=`pill ${isError?'bad':'neutral'}`;
+  $('#source-note').textContent=isError?'Fund evidence is unavailable. Refresh to reconnect.':'No saved cycles match this selection.';
+  $('#footer-cycle').textContent='Paper fund · No cycle selected';
+  $('#content').innerHTML=`<div class="empty ${isError?'error':''}">${esc(message)}</div>`;
 }
-
-function allocationPanel() {
-  const {cfg} = context();
-  const sleeves = [
-    ['Crypto PM',cfg.crypto_budget_usd,'#456b51','Connected'], ['Pairs PM',cfg.pairs_budget_usd,'#aac096','Connected'],
-    ['Momentum reserve',cfg.momentum_reserve_usd,'#d6dcca','Awaiting integration'], ['Central cash',cfg.central_cash_usd,'#edf0e8','Liquidity reserve']
-  ];
-  const total = sleeves.reduce((sum,s) => sum+s[1],0);
-  let stop = 0;
-  const gradient = sleeves.map(s => { const start = stop; stop += total ? s[1]/total*100 : 0; return `${s[2]} ${start}% ${stop}%`; }).join(',');
-  return `<section class="panel"><div class="section-heading"><h2>Capital allocation</h2><span>Configured mandates</span></div><div class="allocation-content"><div class="donut" style="background:conic-gradient(${gradient})" role="img" aria-label="${escapeHtml(sleeves.map(s => `${s[0]} ${percent(s[1]/total)}`).join(', '))}"><div class="donut-inner"><strong>${compact(total)}</strong><small>initial fund mandate</small></div></div><div class="legend">${sleeves.map(s => `<div class="legend-row"><i class="swatch" style="background:${s[2]}"></i><div>${s[0]}<small>${s[3]}</small></div><strong>${percent(total ? s[1]/total : null)}</strong></div>`).join('')}</div></div><div class="panel-foot">Mandates show the initial capital plan. Approved targets and confirmed holdings are tracked separately.</div></section>`;
+function syncCycleUrl() {
+  const url=new URL(location.href);selectedId?url.searchParams.set('cycle',selectedId):url.searchParams.delete('cycle');
+  history.replaceState(null,'',url);
 }
-
-function riskRow(label, value, limit, explanation) {
-  const ratio = numeric(value) && numeric(limit) && limit > 0 ? value/limit : null;
-  const color = ratio === null ? '#c9d1c0' : ratio >= 1 ? '#b36e58' : ratio >= .8 ? '#bc9b5d' : '#7b9b6d';
-  return `<div class="risk-row"><div class="risk-label"><span>${label}</span><strong>${percent(value)} <span class="muted">/ ${percent(limit)}</span></strong></div><div class="track"><span style="width:${ratio === null ? 0 : Math.min(100,Math.max(0,ratio*100))}%;background:${color}"></span></div><div class="risk-caption"><span>${explanation}</span><span>${ratio === null ? 'Unavailable' : `${(ratio*100).toFixed(0)}% of limit`}</span></div></div>`;
+async function chooseFilteredReport() {
+  const list=reportList.filter(r=>modeFilter==='all'||r.mode===modeFilter);
+  $('#cycle-select').innerHTML=list.map(r=>`<option value="${esc(r.id)}">${esc(`${basis(r.mode)} · ${r.as_of} · ${r.cycle_id.slice(0,8)}`)}</option>`).join('');
+  if(!list.length) {
+    selectedId=null;syncCycleUrl();$('#cycle-select').disabled=true;
+    clearReport(reportList.length?'No saved reports match this evidence type. Choose another filter.':'No fund cycles have been saved yet. Generate a demo with python -m fund_agents, then refresh.');return;
+  }
+  if(!list.some(r=>r.id===selectedId))selectedId=list[0].id;
+  $('#cycle-select').value=selectedId;await loadSelected();
 }
-
-function riskPanel() {
-  const {risk,cfg,metrics,drawdown,largestName} = context();
-  return `<section class="panel"><div class="section-heading"><h2>Risk guardrails</h2>${statusBadge(risk.status)}</div>
-    ${riskRow('Fund gross exposure',metrics.target_gross_fraction,cfg.maximum_fund_gross,'Approved target · before netting')}
-    ${riskRow('Largest symbol exposure',largestName,cfg.maximum_name_gross,'Aggregated across PM sleeves')}
-    ${riskRow('Fund drawdown',drawdown,cfg.maximum_drawdown,'Confirmed snapshot vs. peak')}
-    <div class="risk-summary"><span>${risk.status === 'INPUT_HOLD' ? 'Input hold · no approved targets' : risk.state?.breaker_latched ? 'Drawdown breaker remains latched' : risk.status === 'RISK_VETO' ? 'Final fund risk veto' : 'Independent fund review complete'}</span><a href="#risk">Details ↗</a></div></section>`;
+async function loadReports() {
+  if(loading)return;loading=true;$('#refresh').disabled=true;
+  try {
+    const data=await getJson('/api/reports');reportList=data.reports;indexWarnings=data.warnings||[];
+    await chooseFilteredReport();
+  } catch(error) {clearReport(error.message,true);}
+  finally {loading=false;$('#refresh').disabled=false;}
 }
-
-function pmCards() {
-  const {cfg,groups,risk} = context();
-  return `<div class="section-heading"><h2>Portfolio managers</h2><span>Two connected · one reserved</span></div><div class="pm-grid">${['crypto','pairs'].map(pm => {
-    const proposal = report.pm_proposals[pm];
-    const details = proposal.diagnostics;
-    const signal = pm === 'pairs' ? details.pairs?.[0]?.rationale : details.regime?.model;
-    return `<article class="pm-card ${pm}"><div class="pm-top"><div class="pm-icon">${pm === 'crypto' ? '₿' : '⇄'}</div><div><h3>${pmTitle(pm)}</h3><p>${pm === 'crypto' ? 'Adaptive crypto strategies' : 'Kalman / OU mean reversion'}</p></div>${statusBadge(proposal.status)}</div><div class="pm-numbers"><div><small>Capital mandate</small><strong>${compact(cfg[pm+'_budget_usd'])}</strong></div><div><small>Approved gross</small><strong>${risk.status === 'INPUT_HOLD' ? '—' : compact(sumGross(groups.filter(g=>g.pm===pm)))}</strong></div></div><div class="pm-meta">${escapeHtml(details.error || signal || 'No model diagnostic available.')}</div><a class="pm-link" href="#pms">Inspect manager evidence <span style="float:right">↗</span></a></article>`;
-  }).join('')}<article class="pm-card pending"><div class="pm-top"><div class="pm-icon">↗</div><div><h3>Momentum PM</h3><p>Equity momentum strategy</p></div>${badge('PENDING')}</div><div class="pm-numbers"><div><small>Reserved cash</small><strong>${compact(report.momentum_pm.reserved_cash_usd)}</strong></div><div><small>Signal engine</small><strong class="muted">—</strong></div></div><div class="pm-meta">Capital is reserved. The momentum engine is awaiting integration.</div><div class="pm-link muted">${escapeHtml(human(report.momentum_pm.status))}</div></article></div>`;
+async function loadSelected() {
+  const generation=++loadGeneration;$('#cycle-select').disabled=true;$('#brief-export').disabled=true;
+  report=null;
+  $('#source-note').textContent='Opening the selected saved cycle…';
+  $('#mode-badge').textContent='LOADING';
+  $('#content').innerHTML='<div class="loading-state"><span class="loading-orbit"></span><h2>Loading this decision</h2><p>Opening the account snapshot, risk verdict, and committee evidence together.</p></div>';
+  try {
+    const next=await getJson(`/api/report?${new URLSearchParams({id:selectedId})}`);
+    if(generation!==loadGeneration)return;
+    report=next;activePair=0;syncCycleUrl();
+    $('#mode-badge').textContent=basis(report.mode).toUpperCase();$('#mode-badge').className=`pill ${report.mode==='demo'?'warn':'purple'}`;
+    const generated=new Date(report.generated_at_utc).toLocaleString('en-GB',{timeZone:'Asia/Singapore',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false});
+    $('#source-note').innerHTML=`<b>Valuation ${esc(report.as_of)}</b><span class="source-divider">·</span><span>${report.mode==='demo'?'Invented market inputs':'Saved historical inputs'}</span><span class="source-divider">·</span><span>Saved ${esc(generated)} SGT</span><span class="source-divider">·</span><span>Snapshot, not a live account${indexWarnings.length?` · ${indexWarnings.length} unreadable reports skipped`:''}</span>`;
+    $('#footer-cycle').textContent=`Cycle ${report.cycle_id.slice(0,8)} · ${report.config.account_key||'Saved account'} · USD`;
+    $('#brief-export').disabled=false;render();
+  } catch(error) {if(generation===loadGeneration)clearReport(error.message,true,false);}
+  finally {if(generation===loadGeneration)$('#cycle-select').disabled=false;}
 }
 
 function alerts() {
-  const messages = [...(report.fund_risk.alerts || [])];
-  for (const [pm,p] of Object.entries(report.pm_proposals)) if(p.diagnostics.error) messages.push(`${pmTitle(pm)}: ${p.diagnostics.error}`);
-  return messages.length ? `<div class="alert">${messages.map(escapeHtml).join('<br>')}</div>` : '';
+  const messages=[...(report.fund_risk.alerts||[])];
+  for(const [pm,p] of Object.entries(report.pm_proposals||{}))if(p.diagnostics?.error)messages.push(`${pmTitle(pm)}: ${p.diagnostics.error}`);
+  return messages.length?`<div class="alert" role="status">${messages.map(esc).join('<br>')}</div>`:'';
 }
-
+function metric(label,value,sub,symbol) {
+  return `<div class="metric"><div class="metric-label">${esc(label)}${icon(symbol)}</div><div class="metric-value">${value}</div><div class="metric-sub">${sub}</div></div>`;
+}
+function metricsPanel() {
+  const {nav,metrics,snapshot,phantom}=context();
+  return `<div class="metric-grid">${metric('Marked fund value',money(nav),nav===null?'Valuation held · unavailable':(snapshot.holdings||[]).length?'From confirmed account holdings':'Supplied capital · cash-only snapshot','wallet')}${metric('Approved target gross',money(metrics.target_gross_usd),`${pct(metrics.target_gross_fraction)} of marked NAV · proposed holdings`,'chart')}${metric('Exposure reduced by risk',money(phantom?.throttled_gross_usd),phantom?'Submitted targets minus approved targets':'Not measured in this saved cycle','shield')}${metric('Recorded intentions',String((report.execution_receipts||[]).length),`${numeric(metrics.filled_orders)?metrics.filled_orders:'—'} fills · holdings unchanged`,'ledger')}</div>`;
+}
+function hero() {
+  const ready=Object.values(report.pm_proposals||{}).filter(p=>p.status==='READY').length;
+  return `<section class="hero"><div><div class="hero-label">A FUND BUILT TO BE INSPECTED</div><h2>Your portfolio.<br>A clear line of sight.</h2><p>Understand what each manager proposed, how independent risk responded, and the evidence behind every decision.</p><div class="hero-actions"><a class="button on-dark" href="#audit">Review this decision →</a><a class="button ghost-dark" href="#flow">Explore the system</a></div></div><div class="hero-diagram" aria-label="Decision process"><div class="hero-stage"><span>01</span><div><b>Pairs specialist</b><small>Dynamic hedge · mean-reversion research</small></div><em>${ready}/1 ready</em></div><div class="hero-stage"><span>02</span><div><b>Independent risk</b><small>Exposure, concentration & drawdown</small></div><em>${esc(human(report.fund_risk.status))}</em></div><div class="hero-stage"><span>03</span><div><b>Evidence & oversight</b><small>PM diagnostics + Committee Chair</small></div><em>Read-only</em></div></div></section>`;
+}
+function allocationPanel() {
+  const {cfg}=context(),sleeves=[['Pairs PM',cfg.pairs_budget_usd,'#635bff','Connected'],['Momentum reserve',cfg.momentum_reserve_usd,'#d2ccff','Awaiting integration'],['Central cash',cfg.central_cash_usd,'#e9edf5','Liquidity reserve']];
+  if(sleeves.some(s=>!numeric(s[1])))return panel('Capital mandates',empty('Capital policy is unavailable in this saved report.'));
+  const total=sleeves.reduce((sum,s)=>sum+s[1],0);let stop=0;
+  const gradient=sleeves.map(s=>{const start=stop;stop+=total?s[1]/total*100:0;return `${s[2]} ${start}% ${stop}%`;}).join(',');
+  return panel('Capital mandates',`<div class="allocation-content"><div class="donut" style="background:conic-gradient(${gradient})" role="img" aria-label="Initial capital mandates"><div class="donut-inner"><strong>${compact(total)}</strong><small>initial fund mandate</small></div></div><div class="legend">${sleeves.map(s=>`<div class="legend-row"><i class="swatch" style="background:${s[2]}"></i><div>${s[0]}<small>${s[3]}</small></div><strong>${pct(total?s[1]/total:null)}</strong></div>`).join('')}</div></div>${foot('Mandates are capital budgets. They are separate from approved targets and confirmed holdings.')}`,'<span>Initial allocation</span>');
+}
+function riskRow(label,value,limit,caption) {
+  const ratio=numeric(value)&&numeric(limit)&&limit>0?value/limit:null;
+  const color=ratio===null?'#d8deea':ratio>=1?'#c86470':ratio>=.8?'#d0a551':'#8a7af3';
+  return `<div class="risk-row"><div class="risk-label"><span>${esc(label)}</span><strong>${pct(value)} <span class="muted">/ ${pct(limit)}</span></strong></div><div class="track"><span style="width:${ratio===null?0:Math.min(100,Math.max(0,ratio*100))}%;background:${color}"></span></div><div class="risk-caption"><span>${esc(caption)}</span><span>${ratio===null?'Unavailable':`${Math.round(ratio*100)}% of limit`}</span></div></div>`;
+}
+function riskPanel() {
+  const {risk,cfg,metrics,drawdown,largestName,effectiveCap,softActive}=context();
+  const summary=risk.status==='INPUT_HOLD'?'Missing inputs · approvals held':risk.state?.breaker_latched?'Drawdown breaker latched':risk.status==='RISK_VETO'?'Final fund risk veto':softActive?'Soft drawdown control active':'Independent fund review complete';
+  return panel('Risk guardrails',riskRow('Fund gross exposure',metrics.target_gross_fraction,effectiveCap,softActive?'Effective cap · soft control active':'Approved target · before netting')+riskRow('Largest symbol',largestName,cfg.maximum_name_gross,'Combined gross across pair groups')+riskRow('Snapshot drawdown',drawdown,cfg.maximum_drawdown,'Confirmed value against recorded peak')+`<div class="risk-summary"><span>${esc(summary)}</span><a class="text-link" href="#risk">Inspect →</a></div>`,statusBadge(risk.status));
+}
+function exposureChart() {
+  const {risk,groups,cfg}=context();
+  if(!numeric(risk.metrics?.target_gross_usd))return empty('Submitted and approved exposures cannot be compared for this held or vetoed cycle.');
+  const rows=['pairs'].map(pm=>({pm,proposed:sumGross(report.pm_proposals?.[pm]?.groups),approved:sumGross(groups.filter(g=>g.pm===pm)),budget:cfg[`${pm}_budget_usd`]}));
+  const max=Math.max(1,...rows.map(r=>Math.max(r.proposed,r.approved,numeric(r.budget)?r.budget:0)));
+  return `<div class="exposure-bars">${rows.map(r=>`<div class="exposure-row"><div class="exposure-label">${pmTitle(r.pm)}<small>Target gross, USD</small></div><div class="exposure-pair"><div class="exposure-track"><span style="width:${r.proposed/max*100}%" title="Submitted ${money(r.proposed)}"></span></div><div class="exposure-track approved"><span style="width:${r.approved/max*100}%" title="Approved ${money(r.approved)}"></span></div></div><div class="exposure-amount">${compact(r.approved)}<small>of ${compact(r.proposed)} submitted</small></div></div>`).join('')}</div><div class="chart-legend"><span><i style="background:#d6d2ff"></i>Submitted to fund risk</span><span><i style="background:#635bff"></i>Approved</span></div>`;
+}
+function chairSummary() {
+  const chair=report.committee_chair;
+  return panel('Investment committee',chair?`<div class="review-summary"><div class="review-icon">${icon('committee')}</div><div><h3>Committee Chair review</h3><p>${esc(chair.computed_memo?.summary||'Open the recorded evidence to review the Chair’s diagnostics.')}</p><a class="text-link" href="#committee">Read the committee evidence →</a></div></div><div class="review-meta"><span><b>${chair.tool_calls?.length||0}</b> diagnostic calls</span><span>${chair.status==='NOT_REQUESTED'?'Computed summary · no imported model reply':esc(human(chair.status))}</span></div>`:empty('This earlier cycle has no Committee Chair record. Select a newer cycle to inspect the review.'),chair?badge('ADVISORY','purple'):'');
+}
+function pmCards() {
+  const {cfg,groups,metrics}=context();
+  return `<div class="section-heading"><h2>Portfolio managers</h2><span>One connected · one reserved</span></div><div class="pm-grid">${['pairs'].map(pm=>{
+    const p=report.pm_proposals?.[pm]||{},d=p.diagnostics||{};
+    const signal=d.pairs?.[0]?.rationale;
+    return `<article class="pm-card ${pm}"><div class="pm-top"><div class="pm-icon">${icon('pair')}</div><div><h3>${pmTitle(pm)}</h3><p>Kalman / OU · daily pairs</p></div>${statusBadge(p.status)}</div><div class="pm-numbers"><div><small>Capital mandate</small><strong>${compact(cfg[`${pm}_budget_usd`])}</strong></div><div><small>Approved gross</small><strong>${numeric(metrics.target_gross_usd)?compact(sumGross(groups.filter(g=>g.pm===pm))):'—'}</strong></div></div><div class="pm-meta">${esc(d.error||signal||'No saved diagnostic available.')}</div><a class="pm-link" href="#pms" data-manager="${pm}" aria-label="Inspect ${pmTitle(pm)} evidence">Inspect manager evidence <span>→</span></a></article>`;
+  }).join('')}<article class="pm-card pending"><div class="pm-top"><div class="pm-icon">${icon('chart')}</div><div><h3>Momentum PM</h3><p>Equity momentum · reserved</p></div>${badge('PENDING')}</div><div class="pm-numbers"><div><small>Reserved cash</small><strong>${compact(report.momentum_pm?.reserved_cash_usd)}</strong></div><div><small>Signal engine</small><strong class="muted">—</strong></div></div><div class="pm-meta">Capital remains in cash while the momentum engine awaits integration.</div><div class="pm-link muted">No connected strategy <span>○</span></div></article></div>`;
+}
 function overview() {
-  return alerts() + metricsPanel() + `<div class="grid-main">${allocationPanel()}${riskPanel()}</div>` + pmCards() + `<section class="panel"><div class="section-heading"><h2>A connected decision pipeline</h2><a href="#flow">Explore system flow ↗</a></div><div class="flow-strip"><div class="mini-step">01 · Market inputs<small>Crypto candles + equity closes</small></div><span class="flow-arrow">→</span><div class="mini-step">02 · PM proposals<small>Signals, sizing, local checks</small></div><span class="flow-arrow">→</span><div class="mini-step">03 · Fund risk<small>Independent veto + hedge scaling</small></div><span class="flow-arrow">→</span><div class="mini-step">04 · Audit records<small>Linked intents · zero fills</small></div></div><div class="panel-foot">Advisory PM memos consume diagnostics after risk. They have no trading authority.</div></section>`;
+  return alerts()+hero()+metricsPanel()+`<div class="grid-main">${allocationPanel()}${riskPanel()}</div>`+pmCards()+`<div class="grid-main">${panel('From proposals to approved exposure',exposureChart()+foot('A comparison within this saved cycle. These amounts are target exposures, not traded positions.'),'<a class="text-link" href="#risk">Explore Phantom Book →</a>')}${chairSummary()}</div>`;
 }
 
-function targetTable(groups, reviews=false) {
-  if (!groups.length) return empty('No approved targets in this cycle. Missing inputs or a risk veto can prevent approval.');
-  return `<div class="table-wrap"><table><thead><tr><th>MANAGER / GROUP</th><th>SYMBOL</th><th>SIGNED TARGET UNITS</th><th>TARGET NOTIONAL</th><th>${reviews ? 'REVIEW / SCALE' : 'SESSION'}</th></tr></thead><tbody>${groups.flatMap(g => g.legs.map((leg,i) => {
-    const review = report.fund_risk.reviews.find(r => r.approved.group===g.group && r.approved.pm===g.pm);
-    return `<tr><td>${i === 0 ? `${escapeHtml(g.group)}<small>${pmTitle(g.pm)}${g.hedge_beta !== null ? ` · β ${decimal(g.hedge_beta,4)}` : ''}</small>` : '<span class="muted">↳ linked leg</span>'}</td><td>${escapeHtml(leg.symbol)}<small>${leg.units > 0 ? 'Long' : leg.units < 0 ? 'Short' : 'Flat'}</small></td><td>${decimal(leg.units,4)}</td><td class="${leg.units < 0 ? 'negative' : ''}">${money(leg.units*leg.price_usd)}</td><td>${reviews ? `${review ? statusBadge(review.outcome) : '—'}<small>Scale ${percent(review?.scale)}</small>` : `${escapeHtml(g.signal_session)}<small>${g.actionable ? 'Actionable session' : 'Market closed · retain units'}</small>`}</td></tr>`;
+function targetTable(groups,showReviews=false) {
+  if(!groups.length)return empty('No approved targets are available. Input holds or risk vetoes can prevent approval.');
+  return `<div class="table-wrap"><table><thead><tr><th>MANAGER / GROUP</th><th>SYMBOL / DIRECTION</th><th>TARGET UNITS</th><th>SIGNED NOTIONAL</th><th>${showReviews?'RISK / SCALE':'PRICE SESSION'}</th></tr></thead><tbody>${groups.flatMap(g=>(g.legs||[]).map((l,i)=>{
+    const review=(report.fund_risk.reviews||[]).find(r=>r.approved.group===g.group&&r.approved.pm===g.pm);
+    return `<tr><td>${i===0?`<span class="group-label">${esc(g.group)}</span><small>${esc(pmTitle(g.pm))}${numeric(g.hedge_beta)?` · β ${decimal(g.hedge_beta,4)}`:''}</small>`:'<small>↳ Linked hedge leg</small>'}</td><td>${esc(l.symbol)}<small>${l.units>0?'Long target':l.units<0?'Short target':'Flat'}</small></td><td>${decimal(l.units,4)}</td><td>${money(l.units*l.price_usd)}</td><td>${showReviews?`${review?statusBadge(review.outcome):'—'}<small>Scale ${pct(review?.scale)}</small>`:`${esc(g.signal_session)}<small>${g.actionable?'Eligible session':'Market closed · retained units'}</small>`}</td></tr>`;
   })).join('')}</tbody></table></div>`;
 }
-
+function phantomPanel() {
+  const {phantom}=context();
+  if(!phantom)return panel('Phantom Book',empty('Exposure-reduction accounting was not recorded for this cycle. No counterfactual figures have been filled in.'),badge('UNAVAILABLE'),'wide');
+  return panel('Phantom Book',`<p class="subheading">A transparent record of how independent fund risk changed the managers’ submitted exposure.</p><div class="phantom-stats"><div class="phantom-stat"><small>Submitted gross</small><strong>${money(phantom.proposed_gross_usd)}</strong></div><div class="phantom-stat"><small>Approved gross</small><strong>${money(phantom.approved_gross_usd)}</strong></div><div class="phantom-stat"><small>Exposure removed</small><strong>${money(phantom.throttled_gross_usd)}</strong></div></div>${exposureChart()}${foot('Exposure accounting only. Removed gross is not money saved, profit, or a simulated return. NAV minus gross is not spendable cash.')}${details('Inspect saved Phantom Book',phantom)}`,badge(phantom.soft_throttle_active?'SOFT CONTROL ACTIVE':'EXPOSURE ACCOUNTING',phantom.soft_throttle_active?'warn':'purple'),'wide');
+}
 function riskView() {
-  const {risk,cfg,groups,names,nav,snapshot} = context();
-  return alerts() + metricsPanel() + `<div class="grid-equal">${riskPanel()}<section class="panel"><div class="section-heading"><h2>Concentration by symbol</h2><span>Approved gross / marked NAV</span></div>${nav === null ? empty('Concentration is unavailable because fund valuation was held.') : Object.keys(names).length ? Object.entries(names).sort((a,b)=>b[1]-a[1]).map(([name,value]) => riskRow(escapeHtml(name),value/nav,cfg.maximum_name_gross,money(value))).join('') : empty('No approved exposure to display.')}</section></div><section class="panel wide"><div class="section-heading"><h2>Capital protection policy</h2><span>Effective cycle configuration</span></div><div class="risk-policy"><div><h3>Collateral buffer</h3><strong>${percent(cfg.collateral_buffer)}</strong><small>Applied to the smaller of mandate and marked sleeve equity. Short proceeds add no collateral capacity.</small></div><div><h3>Fee reserve</h3><strong>${decimal(cfg.fee_buffer_bps,0)} bps</strong><small>Reserved against an upper bound on target-to-current turnover. This is a reserve, not fees charged.</small></div><div><h3>Linked group scaling</h3><strong>${risk.reviews?.length ? percent(Math.min(...risk.reviews.map(r=>r.scale))) : '—'}</strong><small>A common scale preserves the signed dollar hedge relationship. Closed markets retain confirmed units.</small></div></div></section><section class="panel wide"><div class="section-heading"><h2>Approved targets & risk outcomes</h2><span>Targets do not become holdings</span></div>${targetTable(groups,true)}${jsonDetails('Inspect exact risk decision and binding hashes',risk)}</section><section class="panel"><div class="section-heading"><h2>Confirmed holdings</h2><span>Supplied account · ${snapshot.holdings.length} positions</span></div>${snapshot.holdings.length ? jsonDetails('Inspect confirmed holdings',snapshot.holdings) : empty('The supplied account is flat. Intention records have not changed its holdings.')}<div class="panel-foot">Fund NAV, drawdown and current holdings reflect the supplied snapshot. Performance history, VaR, and realized P&L are unavailable in this record-only integration.</div></section>`;
+  const {risk,cfg,names,nav,groups,snapshot,softActive}=context();
+  const concentration=nav===null?empty('Concentration is unavailable while fund valuation is held.'):Object.keys(names).length?Object.entries(names).sort((a,b)=>b[1]-a[1]).map(([name,value])=>riskRow(name,value/nav,cfg.maximum_name_gross,money(value))).join(''):empty('No approved symbol exposure in this cycle.');
+  const policy=`<div class="policy-grid"><div class="policy-step">${badge(softActive?'ACTIVE':'SOFT CONTROL',softActive?'warn':'purple')}<h3>Soft drawdown threshold</h3><strong>${pct(cfg.soft_drawdown)}</strong><p>When active, the fund gross ceiling is multiplied by ${numeric(cfg.soft_drawdown_scale)?pct(cfg.soft_drawdown_scale):'the saved scale, if available'}. Positions already below the effective ceiling may be unchanged.</p></div><div class="policy-step">${badge(risk.state?.breaker_latched?'LATCHED':'HARD CONTROL',risk.state?.breaker_latched?'bad':'neutral')}<h3>Persistent drawdown breaker</h3><strong>${pct(cfg.maximum_drawdown)}</strong><p>Requests exits on eligible sessions and stays latched across restarts. An exit request cannot guarantee a realized loss limit.</p></div></div>`;
+  return alerts()+metricsPanel()+`<div class="grid-equal">${riskPanel()}${panel('Concentration by symbol',concentration,'<span>Gross before netting</span>')}</div>`+phantomPanel()+panel('Drawdown protection',policy,`<span>${esc(cfg.risk_envelope||'Saved')} envelope</span>`,'wide')+panel('Approved targets & risk outcomes',targetTable(groups,true)+details('Inspect exact risk decision',risk),'<span>Targets are separate from holdings</span>','wide')+panel('Confirmed account holdings',(snapshot.holdings||[]).length?details('Inspect supplied confirmed holdings',snapshot.holdings):empty('The supplied account is flat. Recorded intentions have not changed its holdings.'),`<span>${(snapshot.holdings||[]).length} confirmed positions</span>`);
 }
 
 function forecastChart(pair) {
-  const forecasts = (pair.forecasts || []).filter(f=>numeric(f.horizon_days)&&numeric(f.expected_z));
-  if (!forecasts.length || !numeric(pair.z_score) || !numeric(pair.spread_std) || pair.spread_std <= 0) return empty('The OU forecast is unavailable for this pair. No forecast curve has been synthesized.');
-  const points = [{horizon_days:0,expected_z:pair.z_score}, ...forecasts];
-  const lo = Math.min(-report.config.entry_z, ...points.map(p=>p.expected_z), ...forecasts.filter(p=>numeric(p.lower_95)).map(p=>p.lower_95/pair.spread_std));
-  const hi = Math.max(report.config.entry_z, ...points.map(p=>p.expected_z), ...forecasts.filter(p=>numeric(p.upper_95)).map(p=>p.upper_95/pair.spread_std));
-  const pad=(hi-lo)*.15 || 1, bottom=lo-pad, top=hi+pad;
-  const xmax=Math.max(...points.map(p=>p.horizon_days)), x=d=>52+(d/xmax)*600, y=z=>220-(z-bottom)/(top-bottom)*190;
-  const line=points.map((p,i)=>`${i?'L':'M'} ${x(p.horizon_days)} ${y(p.expected_z)}`).join(' ');
-  const intervals=forecasts.filter(p=>numeric(p.lower_95)&&numeric(p.upper_95));
-  const band=intervals.length ? intervals.map((p,i)=>`${i?'L':'M'} ${x(p.horizon_days)} ${y(p.upper_95/pair.spread_std)}`).join(' ')+' '+[...intervals].reverse().map(p=>`L ${x(p.horizon_days)} ${y(p.lower_95/pair.spread_std)}`).join(' ')+' Z' : '';
-  return `<svg class="chart" viewBox="0 0 690 262" role="img" aria-label="${escapeHtml(pair.pair)} expected future spread Z-score by horizon in sessions, with OU 95 percent interval"><title>OU forward projection, not historical performance</title>${[lo,(lo+hi)/2,hi].map(v=>`<line x1="52" x2="652" y1="${y(v)}" y2="${y(v)}" stroke="#e8ece2"/><text x="10" y="${y(v)+4}">${v.toFixed(1)}</text>`).join('')}<line x1="52" x2="652" y1="${y(0)}" y2="${y(0)}" stroke="#b6c3aa" stroke-dasharray="4 4"/>${[-report.config.entry_z,report.config.entry_z].map(v=>`<line x1="52" x2="652" y1="${y(v)}" y2="${y(v)}" stroke="#ddd7bc" stroke-dasharray="3 5"/>`).join('')}<path d="${band}" fill="#dfead5" opacity=".8"/><path d="${line}" fill="none" stroke="#628453" stroke-width="2.5"/>${points.map(p=>`<circle cx="${x(p.horizon_days)}" cy="${y(p.expected_z)}" r="3.5" fill="#628453"><title>${p.horizon_days} sessions: Z ${p.expected_z.toFixed(3)}</title></circle><text x="${x(p.horizon_days)}" y="245" text-anchor="middle">${p.horizon_days===0?'Now':`+${p.horizon_days}`}</text>`).join('')}</svg><div class="chart-legend"><span><i></i>Expected Z</span><span><i style="background:#dfead5;height:8px"></i>95% OU interval</span><span>Horizon in sessions</span></div>`;
+  const f=(pair.forecasts||[]).filter(p=>numeric(p.horizon_days)&&numeric(p.expected_z));
+  if(!f.length||!numeric(pair.z_score)||!(pair.spread_std>0))return empty('No usable OU forecast was saved for this pair.');
+  const pts=[{horizon_days:0,expected_z:pair.z_score},...f],intervals=f.filter(p=>numeric(p.lower_95)&&numeric(p.upper_95));
+  const entry=report.config.entry_z||0;
+  const lo=Math.min(-entry,...pts.map(p=>p.expected_z),...intervals.map(p=>p.lower_95/pair.spread_std));
+  const hi=Math.max(entry,...pts.map(p=>p.expected_z),...intervals.map(p=>p.upper_95/pair.spread_std));
+  const pad=(hi-lo)*.15||1,bottom=lo-pad,top=hi+pad,max=Math.max(1,...pts.map(p=>p.horizon_days));
+  const x=v=>45+v/max*600,y=v=>220-(v-bottom)/(top-bottom)*190;
+  const line=pts.map((p,i)=>`${i?'L':'M'} ${x(p.horizon_days)} ${y(p.expected_z)}`).join(' ');
+  const band=intervals.length?intervals.map((p,i)=>`${i?'L':'M'} ${x(p.horizon_days)} ${y(p.upper_95/pair.spread_std)}`).join(' ')+' '+[...intervals].reverse().map(p=>`L ${x(p.horizon_days)} ${y(p.lower_95/pair.spread_std)}`).join(' ')+' Z':'';
+  return `<svg class="chart" viewBox="0 0 690 263" role="img" aria-label="${esc(pair.pair)} OU forward spread projection, not historical returns"><title>OU forward spread projection</title>${[lo,(lo+hi)/2,hi].map(v=>`<line x1="45" x2="645" y1="${y(v)}" y2="${y(v)}" stroke="#e9edf5"/><text x="5" y="${y(v)+4}">${v.toFixed(1)}</text>`).join('')}<line x1="45" x2="645" y1="${y(0)}" y2="${y(0)}" stroke="#c8c0e5" stroke-dasharray="4 4"/><path d="${band}" fill="#ebe6ff"/><path d="${line}" fill="none" stroke="#8472e9" stroke-width="2.5"/>${pts.map(p=>`<circle cx="${x(p.horizon_days)}" cy="${y(p.expected_z)}" r="3" fill="#8472e9"><title>+${p.horizon_days} sessions: Z ${p.expected_z.toFixed(3)}</title></circle><text x="${x(p.horizon_days)}" y="247" text-anchor="middle">${p.horizon_days===0?'Now':`+${p.horizon_days}`}</text>`).join('')}</svg><div class="chart-legend"><span><i style="background:#8472e9"></i>Expected Z-score</span><span><i style="background:#e0d7ff"></i>95% OU interval</span><span>Sessions ahead</span></div>`;
 }
-
+function fact(label,value) {return `<div class="fact"><small>${esc(label)}</small><strong>${value}</strong></div>`;}
 function pmsView() {
-  const {cfg} = context();
-  const pairs = report.pm_proposals.pairs;
-  const crypto = report.pm_proposals.crypto;
-  const pairList = pairs.diagnostics.pairs || [];
-  const pair = pairList[activePair];
-  return alerts() + pmCards() + `<section class="panel wide"><div class="section-heading"><h2>Pairs PM · model workbench</h2>${pairList.length ? `<select id="pair-select" aria-label="Pair diagnostics">${pairList.map((p,i)=>`<option value="${i}" ${i===activePair?'selected':''}>${escapeHtml(p.pair)} · ${escapeHtml(p.signal_session)}</option>`).join('')}</select>` : statusBadge(pairs.status)}</div>${pair ? `<p class="subheading">${escapeHtml(pair.rationale)}<br>${escapeHtml(pair.calendar)} · ${pair.rows} observed sessions · ${escapeHtml(pair.market_closed ? 'Market closed; last session valuation only' : 'Signal from completed exchange session')}</p><div class="grid-equal"><div><div class="fact-grid"><div class="fact"><small>Current Z-score</small><strong>${decimal(pair.z_score)}</strong></div><div class="fact"><small>Kalman hedge β</small><strong>${decimal(pair.beta_kalman,4)}</strong></div><div class="fact"><small>OU half-life</small><strong>${decimal(pair.ou_half_life)} <span style="font-size:10px">sessions</span></strong></div><div class="fact"><small>Entry / exit |Z|</small><strong>${decimal(cfg.entry_z)} / ${decimal(cfg.exit_z)}</strong></div><div class="fact"><small>Stop |Z|</small><strong>${decimal(cfg.stop_z)}</strong></div><div class="fact"><small>Holding / maximum</small><strong>${pair.held_sessions} / ${cfg.max_holding_sessions}</strong></div></div><p class="subheading">Target position: <b>${pair.target_position > 0 ? 'Long spread' : pair.target_position < 0 ? 'Short spread' : 'Flat'}</b> · Formation: ${pair.formation ? pair.formation.qualified ? 'qualified' : 'not qualified' : 'disabled / unavailable'}<br>${escapeHtml(pairs.diagnostics.formation_policy)}</p></div><div><div class="section-heading"><h2>Spread reversion forecast</h2>${badge('MODEL PROJECTION')}</div>${forecastChart(pair)}<div class="panel-foot">Saved forward OU estimates. The shaded band is model uncertainty, not a return history or profit guarantee.</div></div></div>` : empty(pairs.diagnostics.error || 'No pair diagnostics are available.')}${jsonDetails('Inspect complete pairs evidence',pairs)}</section><section class="panel wide"><div class="section-heading"><h2>Crypto PM · strategy evidence</h2>${statusBadge(crypto.status)}</div><p class="subheading">${escapeHtml(crypto.diagnostics.regime?.model || crypto.diagnostics.error || 'No regime diagnostic')}<br>${escapeHtml(crypto.diagnostics.regime?.interpretation || '')}</p>${(crypto.diagnostics.specialist_signals||[]).length ? `<div class="table-wrap"><table><thead><tr><th>SYMBOL</th><th>SPECIALIST</th><th>SIGNAL EXPOSURE</th><th>ANNUALIZED VOLATILITY</th><th>RATIONALE</th></tr></thead><tbody>${crypto.diagnostics.specialist_signals.map(s=>`<tr><td>${escapeHtml(s.symbol)}</td><td>${escapeHtml(s.expert)}</td><td>${percent(s.exposure)}</td><td>${percent(s.annualized_volatility)}</td><td>${escapeHtml(s.reason)}</td></tr>`).join('')}</tbody></table></div>` : empty('No specialist signals available.')}${jsonDetails('Inspect local crypto risk, weights, and model diagnostics',crypto.diagnostics)}</section><section class="panel"><div class="section-heading"><h2>PM diagnostic memos</h2><span>Advisory · after risk</span></div><div class="grid-equal">${Object.entries(report.pm_representatives).map(([pm,memo])=>`<div><div class="audit-head"><h3>${pmTitle(pm)}</h3>${statusBadge(memo.status)}</div><p class="subheading">${escapeHtml(memo.computed_memo?.summary)}<br>${escapeHtml(memo.tool_selection_source)}</p><p class="subheading">${memo.tool_calls?.length ?? 0} recorded diagnostic calls. ${memo.status === 'NOT_REQUESTED' ? 'No LLM reply was imported.' : 'Inspect evidence for imported reply validation.'}</p>${jsonDetails('Inspect tool calls and memo provenance',memo)}</div>`).join('')}</div><div class="panel-foot">No automatic LLM provider is connected. Diagnostic memos cannot change quantitative targets, fund risk, or recorded intentions.</div></section>`;
+  const pairs=report.pm_proposals?.pairs||{},pd=pairs.diagnostics||{};
+  const list=pd.pairs||[],pair=list[activePair],cfg=report.config;
+  let pairBody=empty(pd.error||'No pair diagnostics were saved.');
+  if(pair)pairBody=`<p class="subheading">${esc(pair.rationale)}<br>${esc(pair.calendar)} · ${esc(pair.signal_session)} · ${pair.rows} observed sessions${pair.market_closed?' · Market closed, last session valuation':''}</p><div class="grid-equal"><div class="fact-grid">${fact('Current spread Z-score',decimal(pair.z_score))}${fact('Kalman hedge β',decimal(pair.beta_kalman,4))}${fact('OU half-life',`${decimal(pair.ou_half_life)}<small>sessions</small>`)}${fact('Entry / exit |Z|',`${decimal(cfg.entry_z)} / ${decimal(cfg.exit_z)}`)}${fact('Stop |Z|',decimal(cfg.stop_z))}${fact('Sessions held / maximum',`${pair.held_sessions} / ${pair.holding_limit_sessions??cfg.max_holding_sessions}`)}</div><div>${heading('Spread reversion forecast',badge('MODEL PROJECTION'))}${forecastChart(pair)}${foot('Forward model estimates and uncertainty. This is not a historical performance chart.')}</div></div><p class="subheading">Formation: ${pair.formation?pair.formation.qualified?'qualified':'not qualified':'disabled / unavailable'} · ${esc(pd.formation_policy||'No formation policy saved.')}</p>`;
+  const select=list.length?`<select id="pair-select" aria-label="Pair diagnostics">${list.map((p,i)=>`<option value="${i}" ${i===activePair?'selected':''}>${esc(p.pair)}</option>`).join('')}</select>`:statusBadge(pairs.status);
+  const strategy=pd.strategy;
+  const provenance=strategy?`<div class="strategy-source"><div>${badge(strategy.engine_files_verified===true?'ENGINE FILES CHECKED':'SOURCE UNVERIFIED',strategy.engine_files_verified===true?'purple':'warn')}<h3>Teammate strategy · integrated into fund risk</h3><p>Kalman hedge estimation, OU spread forecasts, and formation screening from <a class="text-link" href="https://github.com/MLgeek96/financial-econometrics-project" target="_blank" rel="noopener noreferrer">MLgeek96 / financial-econometrics-project ↗</a></p><span class="mono">Pinned ${esc(strategy.commit?.slice(0,12))} · checked ${esc(strategy.verified_on||'unknown')}</span></div><p class="subheading">Holding limit uses the opening-session OU half-life × ${decimal(strategy.policy?.holding_half_life_multiplier)}, capped at ${strategy.policy?.max_holding_sessions??'—'} sessions. Both signed legs stay linked through independent risk.</p>${details('Inspect strategy policy and local adaptations',strategy)}</div>`:empty('Strategy provenance was not saved for this cycle.');
+  return alerts()+pmCards()+`<div id="pairs-evidence">${panel('Pairs PM · model diagnostics',pairBody+details('Inspect complete pairs proposal',pairs),select,'wide')}</div>`+panel('Strategy source & policy',provenance,'','wide')+panel('Approved manager targets',targetTable(context().groups),'<a class="text-link" href="#committee">Read PM evidence memos →</a>');
 }
 
-const nodeDefinitions = {
-  inputs: ['Market inputs','Completed UTC crypto candles and a local equity close matrix enter separate PM adapters. The pairs adapter validates every expected exchange session and does not forward-fill missing prices. A missing PM input holds the whole cycle.','crypto_agents/data.py · fund_agents/pairs.py'],
-  crypto: ['Crypto PM','The existing Meta agent routes regime, signal, sizing and local risk checks. Its final locally reviewed quantities become fund target groups, converted to USD under the explicit account valuation convention.','fund_agents/crypto.py · crypto_agents/meta.py'],
-  pairs: ['Pairs PM','Kalman estimation produces a signed hedge beta. The OU engine projects spread reversion; formation health, divergence rules and holding limits gate target positions. Both legs travel together as one target group.','fund_agents/pairs.py · fund_agents/vendor/pairs_trading/'],
-  risk: ['Independent fund risk','The coordinator sends both proposals and the same confirmed account snapshot to fund risk. Gross exposure is counted before netting; symbol exposure is aggregated across sleeves. A common scaling factor preserves pair hedges, and the drawdown breaker remains latched in SQLite.','fund_agents/risk.py'],
-  execution: ['Linked intention records','Execution checks the exact persisted approval and account snapshot before recording each linked group. Repeated intentions are deduplicated. There is no quote, borrow, exchange-order or fill adapter, and supplied holdings do not change.','fund_agents/store.py'],
-  audit: ['Atomic audit & report','Decisions, intentions, risk state and the complete cycle are persisted in one transaction. JSON reports expose snapshots, decisions, evidence digests, diagnostic calls and receipts. This dashboard reads those exports.','fund_agents/coordinator.py · fund_agents/__main__.py'],
-  momentum: ['Momentum reserve','The fund reserves cash for a future equity momentum manager. There is no connected momentum signal engine, proposal, or execution path.','FundSnapshot.momentum_cash_usd · momentum_pm.status']
+const toolTitles={inspect_cross_sleeve_exposure:['Combined exposure','Gross symbol exposure and the saved fund risk verdict.','layers'],inspect_phantom_book:['Phantom Book','Proposed, approved, and removed gross exposure.','shield'],inspect_pm_memos:['PM memo summaries','Computed summaries and validation status for each connected PM.','managers'],inspect_signals:['Signals','Saved signals and target groups.','chart'],inspect_model_health:['Model health','Saved model diagnostics and input checks.','shield'],inspect_positions:['Positions','Target reviews and execution boundary.','wallet']};
+function toolCards(memo) {
+  return `<div class="tools-grid">${(memo.tool_calls||[]).map(call=>{
+    const [title,description,symbol]=toolTitles[call.tool]||[human(call.tool),'Saved diagnostic result.','info'];
+    return `<article class="tool-card"><div class="tool-icon">${icon(symbol)}</div><h3>${esc(title)}</h3><p>${esc(description)}</p><span class="mono">Digest ${esc((call.result_sha256||'unavailable').slice(0,16))}${call.result_sha256?'…':''}</span>${details('Inspect recorded tool result',call)}</article>`;
+  }).join('')}</div>`;
+}
+function modelReply(memo) {
+  if(memo.status==='NOT_REQUESTED')return '<span>Computed diagnostics. No model reply was imported.</span>';
+  return `<span>${esc(human(memo.status))}${memo.rejection_reason?` · ${esc(memo.rejection_reason)}`:''}</span>`;
+}
+function importedNarrative(memo) {
+  if(memo.status!=='STRUCTURED_CLAIMS_VALIDATED'||!memo.output_parsed)return '';
+  const output=memo.output_parsed;
+  return `<div class="imported-narrative"><h3>Imported model commentary</h3><div class="memo-meta">Claimed model: ${esc(memo.model||'Unspecified')} · Narrative requires human review</div><p>${esc(output.summary)}</p>${[['Observations',output.observations],['Risk flags',output.risk_flags],['Suggested research',output.suggested_research]].filter(([,items])=>items?.length).map(([label,items])=>`<h4>${label}</h4><ul>${items.map(item=>`<li>${esc(item)}</li>`).join('')}</ul>`).join('')}</div>`;
+}
+function committeeView() {
+  const chair=report.committee_chair;
+  const chairBody=chair?`<section class="committee-card">${heading('Investment Committee Chair',statusBadge(chair.status))}<div class="review-summary"><div class="review-icon">${icon('committee')}</div><div><h3>Fund evidence review</h3><p>${esc(chair.computed_memo?.summary||'No computed summary was saved.')}</p><div class="memo-meta">${modelReply(chair)}</div></div></div>${importedNarrative(chair)}${toolCards(chair)}${details('Inspect Chair memo, input facts, and provenance',chair)}${note('The Chair reviews evidence after the quantitative decision. Digest and structured-metric checks do not validate all free-text claims. Human review remains necessary.')}</section>`:panel('Investment Committee Chair',empty('This saved cycle predates the Committee Chair or did not include its record. Select a newer cycle to inspect its evidence.'),badge('NOT RECORDED'),'wide');
+  const memos=Object.entries(report.pm_representatives||{});
+  const pmBody=memos.length?`<div class="memo-grid">${memos.map(([pm,m])=>`<article class="memo-card"><div class="audit-head"><h3>${esc(pmTitle(pm))}</h3>${statusBadge(m.status)}</div><p>${esc(m.computed_memo?.summary||'No computed summary was saved.')}</p><div class="memo-meta">${modelReply(m)}<br>${m.tool_calls?.length||0} diagnostic calls · ${esc(m.tool_selection_source||'No tool-selection provenance')}</div>${importedNarrative(m)}${details('Inspect PM tools and memo',m)}</article>`).join('')}</div>`:empty('No PM representative records were saved.');
+  return alerts()+chairBody+heading('Specialist PM evidence','<span>Advisory · read-only diagnostic tools</span>')+pmBody+phantomPanel()+note('Automatic LLM provider calls are not connected. Default diagnostics and computed summaries do not mean a language model ran. Memos cannot change targets, risk decisions, or intention records.');
+}
+
+const nodeDefinitions={
+  inputs:['Market inputs','Equity closes follow their declared exchange calendar. Required sessions must be complete, finite and positive. No gap filling; missing data holds the fund cycle.','fund_agents/__main__.py · fund_agents/pairs.py'],
+  pairs:['Pairs PM','The signed Kalman hedge estimate and OU spread model produce linked target legs. Formation checks, divergence limits, and confirmed holding rules constrain proposals.','fund_agents/pairs.py'],
+  risk:['Independent fund risk','Fund risk checks capital and fee reserves, gross exposure before netting, symbol concentration, soft drawdown limits, and a persistent breaker. Common scaling preserves linked pair ratios.','fund_agents/risk.py'],
+  execution:['Linked intentions','Execution requires the exact persisted approval and account snapshot. It records grouped intentions, including both pair legs, with zero fills.','fund_agents/store.py'],
+  audit:['Decision record','An atomic SQLite cycle saves decisions, intention records, risk state, PM evidence, and the Chair review. This portal reads the exported JSON.','fund_agents/coordinator.py'],
+  representatives:['Pairs PM representative','The Pairs PM exposes inspect_signals, inspect_model_health, and inspect_positions. Default calls are deterministic; optional imported replies are checked against the saved facts.','fund_agents/representative.py · PMRepresentative'],
+  chair:['Committee Chair','The Chair inspects cross-sleeve exposure, the Phantom Book, and PM memo summaries after risk. Its review is advisory and has no trading authority.','fund_agents/representative.py · CommitteeChairAgent'],
+  phantom:['Phantom Book','The saved comparison shows proposed gross, approved gross, and reductions by sleeve. It is exposure accounting, not counterfactual return simulation.','fund_agents/models.py · PhantomBook'],
+  momentum:['Momentum reserve','Momentum capital remains cash. A momentum strategy engine is not connected to this fund coordinator.','FundSnapshot.momentum_cash_usd'],
 };
-
-function flowNode(key, step, sub, tone='') {
-  return `<button class="flow-node ${tone} ${activeNode===key?'selected':''}" data-node="${key}" aria-pressed="${activeNode===key}"><span class="node-step">${step}</span><b>${nodeDefinitions[key][0]}</b><small>${escapeHtml(sub)}</small></button>`;
+function nodeEvidence() {
+  if(activeNode==='inputs')return {as_of:report.as_of,mode:report.mode,pairs_data_basis:report.pm_proposals?.pairs?.diagnostics?.data_basis};
+  if(['pairs'].includes(activeNode))return report.pm_proposals[activeNode];
+  return ({risk:report.fund_risk,execution:report.execution_receipts,audit:{cycle_id:report.cycle_id,config_sha256:report.config_sha256,decision_id:report.fund_risk.decision_id},representatives:report.pm_representatives,chair:report.committee_chair,phantom:report.fund_risk.phantom_book,momentum:report.momentum_pm})[activeNode]??{status:'Not recorded in this cycle'};
 }
-
+function flowNode(key,step,sub,tone='') {return `<button class="flow-node ${tone} ${activeNode===key?'selected':''}" data-node="${key}" aria-pressed="${activeNode===key}"><span class="node-step">${esc(step)}</span><b>${nodeDefinitions[key][0]}</b><small>${esc(sub)}</small></button>`;}
 function nodeDetail() {
-  const [title,description,source] = nodeDefinitions[activeNode];
-  let evidence;
-  if (activeNode==='inputs') evidence={as_of:report.as_of,crypto_data_basis:report.pm_proposals.crypto.diagnostics.data_basis,pairs_data_basis:report.pm_proposals.pairs.diagnostics.data_basis,errors:Object.fromEntries(Object.entries(report.pm_proposals).map(([k,p])=>[k,p.diagnostics.error||null]))};
-  else if (['crypto','pairs'].includes(activeNode)) evidence=report.pm_proposals[activeNode];
-  else if (activeNode==='risk') evidence=report.fund_risk;
-  else if (activeNode==='execution') evidence=report.execution_receipts;
-  else if (activeNode==='momentum') evidence=report.momentum_pm;
-  else evidence={cycle_id:report.cycle_id,config_sha256:report.config_sha256,decision_id:report.fund_risk.decision_id,snapshot_sha256:report.fund_risk.snapshot_sha256};
-  return `<h3>${title}</h3><p>${description}</p><div class="code-ref">${source}</div>${jsonDetails('Inspect this connection’s saved evidence',evidence)}`;
+  const [title,text,source]=nodeDefinitions[activeNode];
+  return `<h3>${title}</h3><p>${text}</p><div class="code-ref">${source}</div>${details('Inspect this component’s saved evidence',nodeEvidence())}`;
 }
-
 function flowView() {
-  return `<section class="panel wide"><div class="section-heading"><h2>How the fund connects</h2>${statusBadge(report.status)}</div><p class="subheading">Select a component to inspect its responsibilities, source modules, and actual cycle evidence. Arrows show data and approval flow.</p><div class="flow-grid"><div class="flow-stack">${flowNode('inputs','01 / INGEST',report.mode === 'demo' ? 'Invented demo inputs' : `Historical inputs · ${report.as_of}`)}</div><span class="flow-arrow">→</span><div class="flow-stack">${flowNode('crypto','02 / PROPOSE',human(report.pm_proposals.crypto.status))}${flowNode('pairs','02 / PROPOSE',human(report.pm_proposals.pairs.status))}</div><span class="flow-arrow">→</span><div>${flowNode('risk','03 / APPROVE',human(report.fund_risk.status))}</div><span class="flow-arrow">→</span><div class="flow-stack">${flowNode('execution','04 / RECORD',`${report.execution_receipts.length} linked receipts · no fills`)}${flowNode('audit','05 / PERSIST','SQLite + JSON evidence')}</div></div><div class="advisory"><b>↳ Diagnostic tools → PM memos</b><span>Signals · model health · positions. Computed or imported advisory evidence runs after risk and has no trading authority.</span></div><div style="max-width:300px;margin:20px 0">${flowNode('momentum','PENDING / RESERVED','Cash only · no proposal connection','pending')}</div><div id="flow-detail" class="flow-detail">${nodeDetail()}</div></section><div class="grid-equal"><section class="panel"><div class="section-heading"><h2>Shared contracts</h2></div><p class="subheading">FundSnapshot → PMProposal → TargetGroup → FundRisk review → linked receipt.<br>Each pair target includes two signed legs, the hedge beta, valuation date, and signal session. Exact hashes bind execution records to approval and supplied holdings.</p>${jsonDetails('Inspect configuration',report.config)}</section><section class="panel"><div class="section-heading"><h2>Implemented boundary</h2>${badge('RECORD ONLY','warn')}</div><p class="subheading">Connected: crypto, pairs, independent risk, diagnostic tools, atomic persistence and this dashboard.<br>Pending: momentum signals, automatic LLM calls, executable quotes, borrow checks, fills and consolidated performance accounting.</p></section></div>`;
+  return panel('The two-lane architecture',`<p class="subheading">Quantitative code determines targets and enforces risk. The review lane organizes evidence after the decision. Select any component to inspect its role and saved result.</p><div class="lane-label">01 / QUANTITATIVE DECISION LANE</div><div class="flow-grid"><div>${flowNode('inputs','VALIDATE',basis(report.mode))}</div><span class="flow-arrow">→</span><div>${flowNode('pairs','PROPOSE',human(report.pm_proposals?.pairs?.status))}</div><span class="flow-arrow">→</span><div>${flowNode('risk','APPROVE',human(report.fund_risk.status))}</div><span class="flow-arrow">→</span><div class="flow-stack">${flowNode('execution','RECORD',`${(report.execution_receipts||[]).length} linked group${(report.execution_receipts||[]).length===1?'':'s'} · zero fills`)}${flowNode('audit','PERSIST','Saved decisions + evidence')}</div></div><div class="lane-label">02 / AI REVIEW LANE · READ-ONLY</div><div class="advisory-lane">${flowNode('representatives','INVESTIGATE','Signals · model health · positions')}<span class="flow-arrow">→</span>${flowNode('chair','REVIEW',report.committee_chair?'Recorded Chair evidence':'Not recorded in this cycle')}<span class="flow-arrow">←</span>${flowNode('phantom','COMPARE','Submitted vs. approved exposure')}</div><div class="lane-label">RESERVED MANDATE</div><div style="max-width:300px">${flowNode('momentum','PENDING','Capital held in cash','pending')}</div><div id="flow-detail" class="flow-detail">${nodeDetail()}</div>${note('The human team sets strategy definitions and risk policy. This report viewer does not run models, change policy, or execute trades.')}`,statusBadge(report.status));
 }
-
 function auditView() {
-  const {risk,snapshot} = context();
-  const receipts=report.execution_receipts||[];
-  return alerts() + `<section class="panel wide"><div class="section-heading"><h2>Cycle identity</h2>${statusBadge(report.status)}</div><div class="fact-grid"><div class="fact"><small>Valuation date</small><strong>${escapeHtml(report.as_of)}</strong></div><div class="fact"><small>Execution mode</small><strong style="font-size:17px">${escapeHtml(human(report.execution_mode))}</strong></div><div class="fact"><small>Account</small><strong style="font-size:14px">${escapeHtml(report.config.account_key)}</strong></div></div><p class="subheading">Cycle ID <span class="mono">${escapeHtml(report.cycle_id)}</span><br>Decision ID <span class="mono">${escapeHtml(risk.decision_id)}</span><br>Snapshot SHA-256 <span class="mono">${escapeHtml(risk.snapshot_sha256)}</span></p>${jsonDetails('Inspect confirmed account before and after', {before:snapshot,after:report.portfolio_after})}</section><section class="panel wide"><div class="section-heading"><h2>Execution receipts</h2><span>${receipts.length} groups · zero fills</span></div>${receipts.length ? receipts.map(receipt=>`<div><div class="audit-head"><h3>${escapeHtml(receipt.group)} <span class="muted">/ ${pmTitle(receipt.pm)}</span></h3>${statusBadge(receipt.status)}</div><div class="table-wrap"><table><thead><tr><th>SYMBOL</th><th>SIDE</th><th>CURRENT UNITS</th><th>TARGET UNITS</th><th>DELTA UNITS</th></tr></thead><tbody>${receipt.intent.legs.map(l=>`<tr><td>${escapeHtml(l.symbol)}</td><td>${escapeHtml(l.side)}</td><td>${decimal(l.current_units,4)}</td><td>${decimal(l.units,4)}</td><td>${decimal(l.delta_units,4)}</td></tr>`).join('')}</tbody></table></div>${jsonDetails('Inspect receipt, linked conditions, and intent digest',receipt)}</div>`).join('') : empty('No intention receipts were recorded in this cycle. Existing confirmed holdings remain unchanged.')}</section><section class="panel"><div class="section-heading"><h2>Evidence & limitations</h2><span>Export preserves the original cycle</span></div><p class="subheading">${report.limitations.map(escapeHtml).join('<br>')}</p>${jsonDetails('Inspect original full report',report)}${indexWarnings.length ? jsonDetails('Skipped report details',indexWarnings) : ''}</section>`;
+  const {risk,snapshot}=context(),receipts=report.execution_receipts||[];
+  const identity=`<div class="fact-grid">${fact('Valuation date',esc(report.as_of))}${fact('Execution mode','Record only')}${fact('Recorded fills',numeric(risk.metrics?.filled_orders)?risk.metrics.filled_orders:'—')}</div>${[['Cycle ID',report.cycle_id],['Decision ID',risk.decision_id],['Snapshot SHA-256',risk.snapshot_sha256]].map(([label,value])=>`<div class="hash-row"><span>${label}</span><span class="mono">${esc(value||'Not recorded')}</span></div>`).join('')}<div style="display:flex;gap:10px;margin:18px 0"><button class="button" id="raw-export">${icon('download')}Original cycle JSON</button><button class="button" id="link-copy">Copy cycle link</button></div>${details('Inspect confirmed account before and after',{before:snapshot,after:report.portfolio_after})}`;
+  const receiptBody=receipts.length?receipts.map(r=>`<article class="receipt"><div class="audit-head"><h3>${esc(r.group)} <span class="muted">/ ${esc(pmTitle(r.pm))}</span></h3>${statusBadge(r.status)}</div><div class="table-wrap"><table><thead><tr><th>SYMBOL</th><th>INTENDED SIDE</th><th>CURRENT UNITS</th><th>TARGET UNITS</th><th>DELTA UNITS</th></tr></thead><tbody>${(r.intent?.legs||[]).map(l=>`<tr><td>${esc(l.symbol)}</td><td>${esc(l.side)}</td><td>${decimal(l.current_units,4)}</td><td>${decimal(l.units,4)}</td><td>${decimal(l.delta_units,4)}</td></tr>`).join('')}</tbody></table></div>${details('Inspect linked intention and approval digest',r)}</article>`).join(''):empty('No intention groups were recorded in this cycle. Confirmed holdings remain unchanged.');
+  return alerts()+panel('Decision identity',identity,statusBadge(report.status),'wide')+panel('Linked intention records',receiptBody,`<span>${receipts.length} groups · no execution fills</span>`,'wide')+panel('Original evidence',`<p class="subheading">${(report.limitations||[]).map(esc).join('<br>')}</p>${details('Inspect original complete report',report)}${indexWarnings.length?details('Reports skipped during indexing',indexWarnings):''}${foot('Append-only controls apply inside the trusted local process. Hashes are content bindings, not external tamper-proof attestation.')}`);
 }
 
 function render() {
-  const view = Object.hasOwn(views,location.hash.slice(1)) ? location.hash.slice(1) : 'overview';
-  const [title,description]=views[view];
-  $('#breadcrumb').textContent=title;
-  $('#page-title').innerHTML=`${title}<span class="title-dot">.</span>`;
-  $('#page-description').textContent=description;
-  document.querySelectorAll('nav a').forEach(a=>a.classList.toggle('active',a.dataset.view===view));
-  if (!report) return;
-  $('#content').innerHTML=({overview,risk:riskView,pms:pmsView,flow:flowView,audit:auditView}[view])();
-  document.querySelectorAll('[data-node]').forEach(button=>button.addEventListener('click',()=>{
-    activeNode=button.dataset.node;
-    document.querySelectorAll('[data-node]').forEach(b=>{b.classList.toggle('selected',b===button);b.setAttribute('aria-pressed',b===button);});
-    $('#flow-detail').innerHTML=nodeDetail();
-  }));
-  $('#pair-select')?.addEventListener('change',event=>{activePair=Number(event.target.value);render();});
+  const view=Object.hasOwn(views,location.hash.slice(1))?location.hash.slice(1):'overview';
+  const [title,description]=views[view];$('#breadcrumb').textContent=title;$('#page-title').textContent=title;$('#page-description').textContent=description;
+  document.querySelectorAll('nav a').forEach(a=>{a.classList.toggle('active',a.dataset.view===view);a.dataset.view===view?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current');});
+  if(!report)return;
+  $('#content').innerHTML=({overview,pms:pmsView,risk:riskView,committee:committeeView,flow:flowView,audit:auditView}[view])();
+  document.querySelectorAll('[data-node]').forEach(b=>b.addEventListener('click',()=>{activeNode=b.dataset.node;document.querySelectorAll('[data-node]').forEach(n=>{n.classList.toggle('selected',n===b);n.setAttribute('aria-pressed',String(n===b));});$('#flow-detail').innerHTML=nodeDetail();}));
+  $('#pair-select')?.addEventListener('change',e=>{activePair=Number(e.target.value);render();});
+  $('#raw-export')?.addEventListener('click',()=>download(`fund-cycle-${report.mode}-${report.as_of}-${report.cycle_id}.json`,JSON.stringify(report,null,2),'application/json'));
+  $('#link-copy')?.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(location.href);toast('Cycle link copied. It opens on this local workspace.');}catch{toast('Copy this page’s address to return to the same saved cycle.');}});
+}
+function download(filename,content,type='text/plain') {
+  const url=URL.createObjectURL(new Blob([content],{type}));const a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function investorBrief() {
+  const {risk,cfg,metrics,phantom,nav}=context(),chair=report.committee_chair;
+  return ['MERIDIAN INVESTOR BRIEF',`Valuation date: ${report.as_of}`,`Evidence: ${basis(report.mode)}`,`Cycle: ${report.cycle_id}`,`Account: ${cfg.account_key}`,`Saved: ${report.generated_at_utc}`,'','STRATEGY',`Connected PM: Pairs PM`,`Source: ${report.pm_proposals?.pairs?.diagnostics?.strategy?.repository||'Unavailable'}`,`Pinned commit: ${report.pm_proposals?.pairs?.diagnostics?.strategy?.commit||'Unavailable'}`,'','ACCOUNT AND TARGETS',`Marked fund value: ${money(nav)} (supplied confirmed snapshot)`,`Approved target gross: ${money(metrics.target_gross_usd)} (${pct(metrics.target_gross_fraction)} of NAV)`,`Fund risk: ${risk.status}`,`Recorded intention groups: ${(report.execution_receipts||[]).length}`,`Recorded fills: ${numeric(metrics.filled_orders)?metrics.filled_orders:'Unavailable'}`,'','PHANTOM BOOK',`Submitted gross: ${money(phantom?.proposed_gross_usd)}`,`Approved gross: ${money(phantom?.approved_gross_usd)}`,`Exposure removed: ${money(phantom?.throttled_gross_usd)}`,'Exposure reductions are not profit or money saved.','','COMMITTEE REVIEW',chair?.computed_memo?.summary||'No Chair record in this cycle.',`Model reply status: ${chair?.status||'Not recorded'}`,...Object.entries(report.pm_representatives||{}).map(([pm,m])=>`${pmTitle(pm)}: ${m.computed_memo?.summary||'No summary'} | ${m.status}`),'','BOUNDARY','Saved record-only fund prototype. Intentions do not become holdings or fills. Default computed diagnostics do not establish that an LLM ran. No consolidated fund return history is implemented.','',...(report.limitations||[])].join('\n');
+}
+function toast(message) {clearTimeout(toastTimer);$('#toast').textContent=message;$('#toast').hidden=false;toastTimer=setTimeout(()=>$('#toast').hidden=true,4200);}
+function setMenu(open) {document.body.classList.toggle('menu-open',open);$('#menu-toggle').setAttribute('aria-expanded',String(open));$('#menu-toggle').setAttribute('aria-label',open?'Close navigation':'Open navigation');}
+function focusManager() {
+  if(!managerFocus)return false;
+  const target=document.getElementById(`${managerFocus}-evidence`);managerFocus=null;
+  if(target){target.scrollIntoView({block:'start'});return true;}return false;
+}
+function searchResults() {
+  const q=$('#workspace-search').value.trim().toLowerCase();
+  const pages=Object.entries(views).filter(([key,v])=>`${key} ${v[0]} ${v[1]}`.toLowerCase().includes(q));
+  const reports=reportList.filter(r=>`${r.as_of} ${r.cycle_id} ${r.mode} ${basis(r.mode)} ${r.status}`.toLowerCase().includes(q)).slice(0,8);
+  $('#search-results').innerHTML=(pages.length?'<div class="search-section">WORKSPACE</div>'+pages.map(([key,v])=>`<button class="search-result" data-search-view="${key}"><span>${esc(v[0])}</span><small>Open page →</small></button>`).join(''):'')+(reports.length?'<div class="search-section">SAVED EVIDENCE</div>'+reports.map(r=>`<button class="search-result" data-search-cycle="${esc(r.id)}"><span>${esc(r.as_of)}<small> · ${esc(basis(r.mode))} · ${esc(r.cycle_id.slice(0,8))}</small></span><small>Open cycle →</small></button>`).join(''):'')+(!pages.length&&!reports.length?empty('No matching pages or saved cycles. Try a valuation date or “risk”.'):'');
+  document.querySelectorAll('[data-search-view]').forEach(b=>b.addEventListener('click',()=>{$('#search-dialog').close();location.hash=b.dataset.searchView;}));
+  document.querySelectorAll('[data-search-cycle]').forEach(b=>b.addEventListener('click',()=>{$('#search-dialog').close();modeFilter='all';$('#mode-filter').value='all';selectedId=b.dataset.searchCycle;chooseFilteredReport();}));
+}
+const tour=[
+  ['overview','Your fund at a glance','Start with the supplied account value and approved target exposure. Capital mandates are budgets, while confirmed holdings describe the actual account snapshot. The selected cycle’s label identifies invented or historical inputs.'],
+  ['pms','Meet the specialist managers','Pairs uses the teammate’s Kalman hedge model, OU forecasts, frozen formation checks, and a half-life-based holding limit. Momentum remains reserved cash while its strategy integration is pending.'],
+  ['risk','See what risk changed','Independent fund risk reviews gross exposure, symbol concentration, and drawdown. The Phantom Book records submitted and approved exposure. Removed gross is an exposure difference, not money saved.'],
+  ['committee','Read the committee evidence','PM representatives and the Committee Chair inspect saved diagnostics after risk. Structured imported claims are checked against facts. Default computed summaries are clearly labeled when no model reply was imported.'],
+  ['flow','Follow the two lanes','The quantitative lane produces targets and risk decisions. The advisory lane organizes evidence. Select each component to inspect the actual record connected to it.'],
+  ['audit','Inspect the approval trail','Review the exact approval, confirmed account snapshot, and linked intention groups. Export an investor brief or the original JSON. This integration records zero fills and has no consolidated return history.'],
+];
+function renderTour() {
+  const [view,title,text]=tour[tourIndex];$('#tour-progress').textContent=`INVESTOR WALKTHROUGH · ${tourIndex+1} OF ${tour.length}`;
+  $('#tour-content').innerHTML=`<div class="tour-symbol">${icon(views[view][2])}</div><h2 id="tour-title">${title}</h2><p>${text}</p><button class="tour-open-screen" id="tour-open-screen">Open ${esc(views[view][0].toLowerCase())} →</button>`;
+  $('#tour-back').disabled=tourIndex===0;$('#tour-next').textContent=tourIndex===tour.length-1?'Finish walkthrough':'Next step →';
+  $('#tour-open-screen').addEventListener('click',()=>{location.hash=view;$('#tour-dialog').close();});
 }
 
-$('#cycle-select').addEventListener('change',()=>{selectedId=$('#cycle-select').value;loadSelected();});
+hydrateIcons();
 $('#refresh').addEventListener('click',loadReports);
-$('#export').addEventListener('click',()=>{
-  if(!report)return;
-  const url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'}));
-  const link=document.createElement('a');link.href=url;link.download=`fund-cycle-${report.mode}-${report.as_of}-${report.cycle_id}.json`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
-});
-window.addEventListener('hashchange',render);
-render();
-loadReports();
+$('#cycle-select').addEventListener('change',()=>{selectedId=$('#cycle-select').value;loadSelected();});
+$('#mode-filter').addEventListener('change',()=>{modeFilter=$('#mode-filter').value;chooseFilteredReport();});
+$('#brief-export').addEventListener('click',()=>{if(report){download(`meridian-investor-brief-${report.as_of}-${report.cycle_id.slice(0,8)}.txt`,investorBrief());toast('Investor brief downloaded for the selected cycle.');}});
+$('#menu-toggle').addEventListener('click',()=>setMenu(!document.body.classList.contains('menu-open')));
+$('#mobile-backdrop').addEventListener('click',()=>setMenu(false));
+$('#main-nav').addEventListener('click',e=>{if(e.target.closest('a'))setMenu(false);});
+$('#search-open').addEventListener('click',()=>{$('#workspace-search').value='';searchResults();$('#search-dialog').showModal();$('#workspace-search').focus();});
+$('#workspace-search').addEventListener('input',searchResults);
+$('#tour-start').addEventListener('click',()=>{setMenu(false);tourIndex=0;renderTour();$('#tour-dialog').showModal();});
+$('#tour-back').addEventListener('click',()=>{tourIndex=Math.max(0,tourIndex-1);renderTour();});
+$('#tour-next').addEventListener('click',()=>{if(tourIndex===tour.length-1)$('#tour-dialog').close();else{tourIndex++;renderTour();}});
+document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>document.getElementById(b.dataset.close).close()));
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();if(!$('#tour-dialog').open&&!$('#search-dialog').open)$('#search-open').click();}if(e.key==='Escape')setMenu(false);});
+document.addEventListener('click',e=>{const link=e.target.closest('[data-manager]');if(link){e.preventDefault();managerFocus=link.dataset.manager;if(location.hash==='#pms')focusManager();else location.hash='pms';}});
+window.addEventListener('hashchange',()=>{render();if(!focusManager())window.scrollTo({top:0,behavior:'instant'});});
+render();loadReports();

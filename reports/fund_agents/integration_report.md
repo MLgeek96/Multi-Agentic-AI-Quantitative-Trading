@@ -1,3 +1,5 @@
+> Historical verification from 14 October 2026. The active system now runs Pairs only; see [current verification](pairs_only_verification_20261017.md).
+
 # Crypto and pairs PM integration verification
 
 **Implemented:** 14 October 2026

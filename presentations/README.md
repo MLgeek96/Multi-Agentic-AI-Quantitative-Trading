@@ -1,8 +1,13 @@
-# FE5209 multi-agent project materials
+# FE5209 investor materials
+
+The current system is Pairs-only. Use the updated speaking script and
+[current architecture](../ARCHITECTURE.md#human-ai-and-code-ownership).
+The slide decks below retain the earlier multi-PM mandate and are historical
+until regenerated. Crypto is no longer connected to the active fund.
 
 ## Investor roadshow, 17 October 2026
 
-- [Human, AI and code ownership diagram](../ARCHITECTURE.md#human-ai-and-code-ownership-proposed)
+- [Human, AI and code ownership diagram](../ARCHITECTURE.md#human-ai-and-code-ownership)
 - [Editable 14-slide investor roadshow](roadshow_20261017/FE5209_Investor_Roadshow_v2.pptx)
 - [Roadshow PDF preview](../output/pdf/FE5209_Investor_Roadshow_v2.pdf)
 - [Four-slide one-minute pitch](roadshow_20261017/FE5209_60_Second_Pitch_v2.pptx)
@@ -21,6 +26,18 @@ draft subtitles and a detailed checklist for the 24 October submission. It is
 a presentation handoff pack rather than the final course ZIP. Member names,
 final out-of-sample results, strategy/data packaging and optional video recording
 remain team work. No Canvas or registration-sheet update has taken place.
+
+### Full investor walkthrough
+
+The [editable speaking script](roadshow_20261017/Investor_System_Walkthrough_and_QA.docx)
+and [plain-text rehearsal copy](roadshow_20261017/Investor_System_Walkthrough_and_QA.txt)
+provide a complete Pairs-only walkthrough with current dashboard cues, the
+teammate strategy source, independent risk, Committee Chair and Phantom Book,
+15 investor questions, and a one-minute pitch. The account is now USD 1.5M Pairs,
+USD 1.5M Momentum reserve, and USD 2M central cash. The
+[document builder](source/build_investor_walkthrough.py) and
+[narration content](source/pairs_walkthrough_content.py) retain the source.
+The existing PPTX files and earlier narration have not been regenerated.
 
 Rebuild these materials with [build_roadshow.mjs](source/build_roadshow.mjs), then
 [export_roadshow_pack.py](source/export_roadshow_pack.py). They use the same runtime
@@ -46,7 +63,7 @@ linked to computed evidence. Quantitative engines calculate target positions.
 A coordinator combines portfolios and assigns capital, and an independent risk
 controller governs execution. The slides describe the design before the local
 two-PM integration. The [current implementation guide](../fund_agents/README.md)
-now connects Crypto and Pairs PM engines with diagnostic tools and fund risk.
+now runs the Pairs PM with diagnostic tools and independent fund risk.
 Momentum, automatic LLM provider calls, fills and consolidated performance
 remain future work. The deck has not been regenerated for this implementation.
 

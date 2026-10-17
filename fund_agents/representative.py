@@ -2,8 +2,8 @@
 
 import json
 
-from crypto_agents.models import fingerprint, json_value
-from crypto_agents.research import ResearchAgent
+from .evidence import fingerprint, json_value
+from .research import ResearchAgent
 
 
 class PMRepresentative:
@@ -56,7 +56,7 @@ class PMRepresentative:
                  "evidence_sha256": self.proposal.evidence_sha256, "tool_results": evidence,
                  "metrics": dict(self.risk["metrics"]), "risk_status": self.risk["status"]}
         audit = ResearchAgent().review(facts, reply)
-        audit["system_prompt"] = audit["system_prompt"].replace("crypto research analyst", self.proposal.pm + " PM analyst")
+        audit["system_prompt"] = audit["system_prompt"].replace("fund research analyst", self.proposal.pm + " PM analyst")
         audit["prompt_version"] = "fund-pm-v1"
         audit["available_tools"] = {name: {"arguments": {}, "read_only": True} for name in self.tools}
         audit["tool_calls"] = self.calls
@@ -148,9 +148,10 @@ class CommitteeChairAgent:
                 names, selection_error = list(self.tools), str(exc)
         evidence = {name: self.call_tool(name) for name in names}
         phantom = self.risk.get("phantom_book", {})
-        throttled_usd = float(phantom.get("throttled_gross_usd", 0.0)) if isinstance(phantom, dict) else 0.0
+        throttled_usd = phantom.get("throttled_gross_usd") if isinstance(phantom, dict) else None
         metrics = dict(self.risk["metrics"])
-        metrics["throttled_gross_usd"] = throttled_usd
+        if throttled_usd is not None:
+            metrics["throttled_gross_usd"] = throttled_usd
         facts = {
             "role": "committee_chair",
             "as_of": self.risk["as_of"],
@@ -160,7 +161,7 @@ class CommitteeChairAgent:
         }
         audit = ResearchAgent().review(facts, reply)
         audit["system_prompt"] = audit["system_prompt"].replace(
-            "crypto research analyst", "Investment Committee Chair"
+            "fund research analyst", "Investment Committee Chair"
         )
         audit["prompt_version"] = "fund-chair-v1"
         audit["available_tools"] = {name: {"arguments": {}, "read_only": True} for name in self.tools}
@@ -170,8 +171,9 @@ class CommitteeChairAgent:
         )
         audit["computed_memo"] = {
             "summary": (
-                f"Committee Chair reviewed {len(self.pm_memos)} PM sleeves; "
-                f"fund risk {self.risk['status']}; throttled gross USD {throttled_usd:,.2f}."
+                f"Committee Chair reviewed {len(self.pm_memos)} connected PM; "
+                f"fund risk {self.risk['status']}; "
+                + (f"throttled gross USD {throttled_usd:,.2f}." if throttled_usd is not None else "throttled gross unavailable.")
             ),
             "evidence_sha256": fingerprint(facts),
             "execution": "Advisory only; zero trading authority",

@@ -28,5 +28,7 @@
       "upstream_sha256": "2a57212777a3be1b6283902e8c63dab801e4f6d5592c6684a8c883c79bf3f811",
       "local_sha256": "2a57212777a3be1b6283902e8c63dab801e4f6d5592c6684a8c883c79bf3f811"
     }
-  }
+  },
+  "verified_on": "2026-10-17",
+  "remote_ref": "refs/heads/main"
 }

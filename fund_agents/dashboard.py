@@ -39,11 +39,13 @@ def reports_in(directory):
             if not path.resolve().is_relative_to(directory.resolve()):
                 continue
             report = json.loads(path.read_text(encoding="utf-8"), parse_constant=reject_constant, parse_float=finite_float)
-            if not isinstance(report, dict) or report.get("schema_version") != "two-pm-fund-v1":
+            if not isinstance(report, dict) or report.get("schema_version") != "pairs-fund-v2":
                 continue
             for key in ("config", "fund_risk", "pm_proposals", "portfolio_before"):
                 if not isinstance(report.get(key), dict):
                     raise ValueError("incomplete report: " + key)
+            if set(report["pm_proposals"]) != {"pairs"}:
+                raise ValueError("active portal requires exactly the Pairs PM")
             if not all(isinstance(report.get(k), str) and report[k]
                        for k in ("cycle_id", "as_of", "generated_at_utc", "mode", "status")):
                 raise ValueError("missing report identity")

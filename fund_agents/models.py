@@ -5,7 +5,7 @@ import math
 
 import pandas as pd
 
-from crypto_agents.models import fingerprint, json_value
+from .evidence import fingerprint, json_value
 
 
 def finite(value, name, minimum=None):
@@ -41,12 +41,11 @@ class PairSpec:
 @dataclass(frozen=True)
 class FundConfig:
     mode: str = "demo"
-    account_key: str = "two-pm-demo"
+    account_key: str = "pairs-fund-demo"
     execution_mode: str = "record_only"
-    crypto_budget_usd: float = 1_500_000.0
     pairs_budget_usd: float = 1_500_000.0
     momentum_reserve_usd: float = 1_500_000.0
-    central_cash_usd: float = 500_000.0
+    central_cash_usd: float = 2_000_000.0
     maximum_fund_gross: float = 0.8
     maximum_name_gross: float = 0.2
     maximum_drawdown: float = 0.25
@@ -63,11 +62,15 @@ class FundConfig:
     exit_z: float = 0.10
     stop_z: float = 3.50
     max_holding_sessions: int = 45
+    holding_half_life_multiplier: float = 2.5
+    formation_adf_pvalue: float = 0.10
+    formation_min_correlation: float = 0.60
+    formation_min_half_life: float = 2.0
+    formation_max_half_life: float = 90.0
     kalman_q: float = 1e-5
     kalman_r: float = 1e-3
-    crypto_config_path: str = "config/agents.demo.json"
-    state_path: str = "runtime/fund_agents.demo.sqlite"
-    report_directory: str = "runs/fund_agents/demo"
+    state_path: str = "runtime/pairs_fund.demo.sqlite"
+    report_directory: str = "runs/fund_agents/pairs_only/demo"
     pairs: tuple[PairSpec, ...] = field(default_factory=lambda: (PairSpec("V", "MA"),))
 
     def __post_init__(self) -> None:
@@ -75,7 +78,7 @@ class FundConfig:
             raise ValueError("fund supports demo/research with record_only execution")
         if self.risk_envelope not in ("standard", "conservative", "aggressive"):
             raise ValueError("risk_envelope must be standard, conservative or aggressive")
-        for name in ("crypto_budget_usd", "pairs_budget_usd"):
+        for name in ("pairs_budget_usd",):
             finite(getattr(self, name), name, 1e-12)
         for name in ("momentum_reserve_usd", "central_cash_usd", "fee_buffer_bps"):
             finite(getattr(self, name), name, 0)
@@ -89,8 +92,15 @@ class FundConfig:
         finite(self.collateral_buffer, "collateral_buffer", 0)
         if self.collateral_buffer >= 1 or not (0 < self.exit_z < self.entry_z < self.stop_z):
             raise ValueError("invalid collateral buffer or spread thresholds")
-        for name in ("entry_z", "exit_z", "stop_z", "kalman_q", "kalman_r"):
+        for name in ("entry_z", "exit_z", "stop_z", "kalman_q", "kalman_r", "holding_half_life_multiplier",
+                     "formation_min_half_life", "formation_max_half_life"):
             finite(getattr(self, name), name, 1e-12)
+        for name in ("formation_adf_pvalue", "formation_min_correlation"):
+            finite(getattr(self, name), name, 1e-12)
+            if getattr(self, name) > 1:
+                raise ValueError(f"{name} cannot exceed one")
+        if self.formation_min_half_life >= self.formation_max_half_life:
+            raise ValueError("formation half-life bounds must increase")
         for name, lower in (("pair_minimum_rows", 60), ("max_holding_sessions", 1)):
             value = getattr(self, name)
             if type(value) is not int or value < lower:
@@ -101,7 +111,7 @@ class FundConfig:
 
     @property
     def initial_nav_usd(self) -> float:
-        return self.crypto_budget_usd + self.pairs_budget_usd + self.momentum_reserve_usd + self.central_cash_usd
+        return self.pairs_budget_usd + self.momentum_reserve_usd + self.central_cash_usd
 
 
 @dataclass(frozen=True)
@@ -128,12 +138,10 @@ class Holding:
     opened_on: str | None = None
 
     def __post_init__(self):
-        if self.pm not in ("crypto", "pairs") or not self.group or not self.symbol:
+        if self.pm != "pairs" or not self.group or not self.symbol:
             raise ValueError("unknown PM or empty holding identity")
         finite(self.units, "signed units")
         finite(self.entry_price_usd, "entry price", 1e-12)
-        if self.pm == "crypto" and self.units < 0:
-            raise ValueError("the current Crypto PM supports long-only Spot")
         if self.pm == "pairs" and self.units != 0 and self.opened_on is None:
             raise ValueError("open pairs need an opened_on session for time stops")
         if self.opened_on is not None:
@@ -143,23 +151,20 @@ class Holding:
 @dataclass(frozen=True)
 class FundSnapshot:
     as_of: str
-    crypto_cash_usd: float
     pairs_cash_usd: float
     momentum_cash_usd: float
     central_cash_usd: float
     peak_nav_usd: float
     holdings: tuple[Holding, ...] = ()
-    usdt_to_usd: float = 1.0
     fx_to_usd: tuple[tuple[str, float], ...] = (("USD", 1.0),)
     fx_as_of: str | None = None
-    valuation_note: str = "USDT valued at USD 1 by explicit paper-account convention"
+    valuation_note: str = "Equity closes converted to USD using explicit snapshot FX quotes"
 
     def __post_init__(self):
         date(self.as_of)
-        for name in ("crypto_cash_usd", "pairs_cash_usd", "momentum_cash_usd", "central_cash_usd"):
+        for name in ("pairs_cash_usd", "momentum_cash_usd", "central_cash_usd"):
             finite(getattr(self, name), name, 0)
         finite(self.peak_nav_usd, "peak NAV", 1e-12)
-        finite(self.usdt_to_usd, "USDT conversion", 1e-12)
         if self.fx_as_of is not None:
             date(self.fx_as_of)
         if len(dict(self.fx_to_usd)) != len(self.fx_to_usd) or dict(self.fx_to_usd).get("USD") != 1:
@@ -172,7 +177,7 @@ class FundSnapshot:
 
     @classmethod
     def initial(cls, config, as_of):
-        return cls(as_of, config.crypto_budget_usd, config.pairs_budget_usd,
+        return cls(as_of, config.pairs_budget_usd,
                    config.momentum_reserve_usd, config.central_cash_usd, config.initial_nav_usd)
 
     def group_holdings(self, pm, group):
@@ -216,12 +221,10 @@ class TargetGroup:
     def __post_init__(self):
         date(self.as_of)
         date(self.signal_session)
-        if self.signal_session > self.as_of or not self.group or self.pm not in ("crypto", "pairs"):
+        if self.signal_session > self.as_of or not self.group or self.pm != "pairs":
             raise ValueError("invalid target identity or future signal session")
         if not self.legs or len({l.symbol for l in self.legs}) != len(self.legs):
             raise ValueError("target group needs unique legs")
-        if self.pm == "crypto" and (len(self.legs) != 1 or self.legs[0].units < 0):
-            raise ValueError("Crypto PM target must be one long/cash leg")
         if self.pm == "pairs":
             if len(self.legs) != 2 or self.hedge_beta is None:
                 raise ValueError("pair targets must carry both legs and their hedge beta")
@@ -249,7 +252,7 @@ class PMProposal:
     evidence_sha256: str
 
     def __post_init__(self):
-        if self.pm not in ("crypto", "pairs") or self.status not in ("READY", "INPUT_HOLD"):
+        if self.pm != "pairs" or self.status not in ("READY", "INPUT_HOLD"):
             raise ValueError("invalid PM proposal")
         if any(g.pm != self.pm for g in self.groups) or len({g.group for g in self.groups}) != len(self.groups):
             raise ValueError("PM group identities must be unique and match their owner")

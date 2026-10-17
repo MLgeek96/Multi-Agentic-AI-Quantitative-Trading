@@ -1,29 +1,46 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Meridian | Fund oversight</title><link rel="stylesheet" href="/styles.css"><script src="/app.js" defer></script></head>
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#635bff"><meta name="description" content="Inspect strategy proposals, independent risk decisions, and committee evidence in the Meridian investor workspace.">
+  <title>Meridian | Investor workspace</title><link rel="stylesheet" href="/styles.css"><script src="/app.js" defer></script>
+</head>
 <body>
-<aside class="sidebar">
-  <a class="brand" href="#overview"><span class="brand-mark">m<span>↗</span></span><span>meridian<span class="brand-sub">RESEARCH TERMINAL</span></span></a>
-  <div class="workspace"><span class="workspace-icon">M</span><div>Multi-strategy fund<small>FE5209 · Research workspace</small></div><span class="muted">⌄</span></div>
-  <div class="nav-label">WORKSPACE</div>
-  <nav aria-label="Main navigation">
-    <a href="#overview" data-view="overview"><span>◫</span>Fund overview</a>
-    <a href="#risk" data-view="risk"><span>◇</span>Risk monitor</a>
-    <a href="#pms" data-view="pms"><span>◈</span>Portfolio managers</a>
-    <a href="#flow" data-view="flow"><span>⌘</span>System flow</a>
-    <a href="#audit" data-view="audit"><span>≡</span>Decision ledger</a>
-  </nav>
-  <div class="sidebar-note"><span class="live-dot"></span> Local report connection<p>Saved coordinator evidence.<br>Read-only inspection.</p></div>
-  <div class="sidebar-footer"><span class="avatar">RQ</span><div>Research desk<small>Record-only environment</small></div></div>
-</aside>
-<div class="shell">
-  <header class="topbar"><div class="breadcrumb">Workspace <span>/</span> <strong id="breadcrumb">Fund overview</strong></div><div class="top-meta"><span class="pill neutral">RECORD ONLY</span><span class="top-clock">USD base currency</span></div></header>
-  <main>
-    <div class="page-heading"><div><div class="eyebrow">MULTI-STRATEGY / FUND INTELLIGENCE</div><h1 id="page-title">Fund overview<span class="title-dot">.</span></h1><p id="page-description">One view of your capital, managers, and independent risk controls.</p></div><div class="heading-actions"><button id="refresh" class="button">↻ &nbsp; Refresh reports</button><button id="export" class="button dark" disabled>↓ &nbsp; Export cycle</button></div></div>
-    <section class="cycle-toolbar" aria-label="Report selection"><div><span class="live-dot"></span><strong>Coordinator snapshot</strong><span id="mode-badge" class="pill neutral">Loading</span></div><label for="cycle-select">Saved cycle <select id="cycle-select" aria-label="Saved cycle"><option>Loading reports…</option></select></label></section>
-    <div id="source-note" class="source-note" role="status">Connecting to local fund reports…</div>
-    <div id="content" aria-live="polite"></div>
-    <footer class="page-footer"><span>MERIDIAN <span class="muted">/</span> CRYPTO × PAIRS</span><span id="footer-cycle">Saved evidence · No exchange connection</span></footer>
-  </main>
-</div>
-</body></html>
+  <a class="skip-link" href="#content">Skip to fund information</a>
+  <button class="mobile-backdrop" id="mobile-backdrop" aria-label="Close navigation" tabindex="-1"></button>
+  <aside class="sidebar" aria-label="Investor workspace">
+    <a class="brand" href="#overview" aria-label="Meridian overview"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>meridian<span class="brand-period">.</span></a>
+    <div class="workspace"><span class="workspace-icon">M</span><div>Pairs-led research fund<small>Investor workspace</small></div><span class="workspace-chevron" aria-hidden="true">⌄</span></div>
+    <div class="nav-label">YOUR FUND</div>
+    <nav id="main-nav" aria-label="Main navigation">
+      <a href="#overview" data-view="overview"><span data-icon="overview"></span><span>Overview</span></a>
+      <a href="#pms" data-view="pms"><span data-icon="managers"></span><span>Portfolio managers</span><span class="nav-count">1</span></a>
+      <a href="#risk" data-view="risk"><span data-icon="shield"></span><span>Risk & protection</span></a>
+      <a href="#committee" data-view="committee"><span data-icon="committee"></span><span>Committee review</span><span class="new-dot" aria-label="New"></span></a>
+      <a href="#flow" data-view="flow"><span data-icon="flow"></span><span>System flow</span></a>
+      <a href="#audit" data-view="audit"><span data-icon="ledger"></span><span>Decision ledger</span></a>
+    </nav>
+    <div class="sidebar-bottom">
+      <button id="tour-start" class="tour-card"><span data-icon="compass"></span><strong>Get to know your fund</strong><span>A six-step investor walkthrough</span><b>Take the tour →</b></button>
+      <div class="sidebar-status"><span class="status-dot"></span><div>Paper fund environment<small>Saved evidence · Read-only access</small></div></div>
+      <div class="sidebar-profile"><span class="avatar">IN</span><div>Investor access<small>Meridian research fund</small></div><span data-icon="lock"></span></div>
+    </div>
+  </aside>
+  <div class="shell">
+    <header class="topbar">
+      <div class="topbar-left"><button id="menu-toggle" class="icon-button mobile-menu" aria-label="Open navigation" aria-expanded="false"><span data-icon="menu"></span></button><span class="breadcrumb-label">Investor workspace</span><span class="breadcrumb-separator">/</span><strong id="breadcrumb">Overview</strong></div>
+      <div class="topbar-actions"><button id="search-open" class="search-trigger" aria-label="Search workspace"><span data-icon="search"></span><span>Search workspace</span><kbd>Ctrl K</kbd></button><span class="environment-badge"><span class="status-dot"></span>Paper fund</span></div>
+    </header>
+    <main>
+      <div class="page-heading"><div><div class="eyebrow">MERIDIAN INVESTOR PORTAL</div><h1 id="page-title">Overview</h1><p id="page-description">A clear view of your fund, its managers, and every proposed decision.</p></div><div class="heading-actions"><button id="refresh" class="button"><span data-icon="refresh"></span><span>Refresh</span></button><button id="brief-export" class="button primary" disabled><span data-icon="download"></span>Investor brief</button></div></div>
+      <section class="cycle-toolbar" aria-label="Evidence selection"><div class="cycle-identity"><span data-icon="calendar"></span><span>Decision snapshot</span><span id="mode-badge" class="pill neutral">Connecting</span></div><div class="cycle-controls"><label class="sr-only" for="mode-filter">Filter report type</label><select id="mode-filter"><option value="all">All evidence</option><option value="demo">Synthetic demos</option><option value="research">Historical replays</option></select><label class="sr-only" for="cycle-select">Saved cycle</label><select id="cycle-select" aria-label="Saved cycle"><option>Loading saved cycles…</option></select></div></section>
+      <div id="source-note" class="source-note" role="status">Connecting to saved fund evidence…</div>
+      <div id="content" tabindex="-1" aria-live="polite"><div class="loading-state"><span class="loading-orbit"></span><h2>Opening your workspace</h2><p>Loading saved decisions and manager evidence.</p></div></div>
+      <footer class="page-footer"><span>meridian<span class="brand-period">.</span><span>Visibility into every decision.</span></span><span id="footer-cycle">Paper fund · Saved evidence · USD</span></footer>
+    </main>
+  </div>
+  <dialog id="search-dialog" class="search-dialog" aria-labelledby="search-title"><div class="dialog-top"><h2 id="search-title">Find your way around</h2><button class="icon-button" data-close="search-dialog" aria-label="Close search"><span data-icon="close"></span></button></div><label class="search-field"><span data-icon="search"></span><input id="workspace-search" type="search" autocomplete="off" placeholder="Search pages, dates, or saved cycles" aria-label="Search pages and saved cycles"></label><div id="search-results" class="search-results"></div><div class="dialog-foot">Navigate pages and inspect saved fund evidence.<kbd>Esc to close</kbd></div></dialog>
+  <dialog id="tour-dialog" class="tour-dialog" aria-labelledby="tour-title"><div class="dialog-top"><span class="eyebrow" id="tour-progress">INVESTOR WALKTHROUGH</span><button class="icon-button" data-close="tour-dialog" aria-label="Close walkthrough"><span data-icon="close"></span></button></div><div id="tour-content"></div><div class="tour-actions"><button id="tour-back" class="button">Previous</button><button id="tour-next" class="button primary">Next step →</button></div></dialog>
+  <div id="toast" class="toast" role="status" hidden></div>
+</body>
+</html>

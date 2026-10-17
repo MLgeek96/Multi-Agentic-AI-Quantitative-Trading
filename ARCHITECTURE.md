@@ -1,118 +1,90 @@
-# Crypto and pairs PM agent infrastructure
+# Pairs fund architecture
 
-## Fund coordinator added on 14 October 2026
+Updated 17 October 2026. Pairs is the only connected PM. The teammate's pinned
+Kalman, OU, forecasting, and formation engines run through `fund_agents/pairs.py`.
+The active package does not import the legacy Crypto engine or its risk state.
 
-`fund_agents` connects the existing Crypto PM to the teammate's daily Kalman/OU
-Pairs PM. Each PM owns its quantitative engine and has a representative exposing
-read-only signal, model-health and position tools. Imported AI memos are checked
-against computed evidence after quantitative risk decisions.
+## Human AI and code ownership
 
-```mermaid
-flowchart TD
-    C[Existing crypto_agents engine and local Risk] --> FC[Fund coordinator]
-    P[Teammate Kalman and OU pairs engine] --> FC
-    FC --> FR[Independent fund Risk: capital, gross, names, linked hedges]
-    FR --> E[Persist approved target groups]
-    E --> X[Execution: record linked intentions, zero fills]
-    C --> CT[Crypto PM diagnostic tools]
-    P --> PT[Pairs PM diagnostic tools]
-    FR --> CT
-    FR --> PT
-    CT --> CM[Advisory Crypto PM memo]
-    PT --> PM[Advisory Pairs PM memo]
-    X --> DB[Separate fund SQLite audit]
-    CM --> DB
-    PM --> DB
-    DB --> J[Export saved JSON cycle]
-    J --> UI[Read-only local dashboard: risk, PM diagnostics, flow, ledger]
-```
-
-The shared fund contracts allow signed pair quantities and retain both legs in
-one group. Crypto's internal nonnegative Spot contracts are retained by its
-adapter. Fund risk counts gross exposure before netting and uses common scaling
-to preserve dollar hedge ratios. Equity calendars, last actual session dates,
-and explicit USD/USDT or dated foreign-currency valuations are exposed in the
-reports. Confirmed snapshots supply holdings; intention records never become
-fills. Fund and crypto breaker state persist together in the separate fund store.
-
-Run `python -m fund_agents` for the invented-data demo. The
-[integration guide](fund_agents/README.md) covers historical research,
-confirmed positions, imported PM replies and output files. Momentum is an
-unconnected cash reserve. Automatic LLM calls, executable lot sizing and borrow
-checks, paper fills, and consolidated performance are not implemented here.
-
-`python -m fund_agents.dashboard` serves the local frontend on
-`http://127.0.0.1:8765`. Its GET-only report API indexes coordinator JSON exports
-and serves reports only by indexed relative identity. Static assets are local
-and explicitly allowlisted. The frontend shares one selected cycle across its
-overview, risk, PM, flow and audit views; it displays valuation dates and demo
-provenance, leaves missing measurements unavailable, and keeps approved target
-exposure separate from confirmed account holdings. It does not invoke PMs,
-connect to exchanges, or mutate SQLite. New reports appear on manual refresh.
-
-## Human, AI and code ownership (Two-Lane Architecture)
-
-The student team acts as the human Board. It approves the strategy definitions,
-capital policy, evaluation assumptions and risk limits. The daily paper cycle
-runs deterministically within that policy. Humans review exceptions and policy changes.
-
-The architecture separates the **Deterministic Quantitative Spine** (which computes
-signals, sizes targets, enforces tiered risk envelopes and records append-only
-intentions) from the **Multi-Agent AI Audit & IC Lane** (which uses read-only
-diagnostic tools and SHA-256 fact-checked memos to explain decisions without
-holding order authority).
+The human team owns strategy definitions and risk policy. Deterministic code
+computes targets, enforces risk, and saves intentions. The advisory lane reviews
+evidence after the quantitative decision and has no order authority.
 
 ```mermaid
 flowchart TB
-    BOARD["HUMAN BOARD OF DIRECTORS<br/>Approve strategies · Set $5M mandate ($1.5M x 3 PMs + $0.5M cash) · Freeze risk policy"]
-
-    subgraph SPINE["LANE 1: DETERMINISTIC QUANTITATIVE SPINE (100% Reproducible Code)"]
-        direction TB
-        subgraph SLEEVES["Independent Strategy Engines"]
-            M_ENG["Momentum Engine<br/>($1.5M Mandate)"]
-            P_ENG["Daily Pairs Engine<br/>(Kalman + OU Spread · $1.5M)"]
-            C_ENG["Crypto Engine<br/>(Regime + Adaptive Trend · $1.5M)"]
-        end
-        RISK["Independent Fund Risk Gate (Code Veto)<br/>80% Fund Gross · 20% Symbol Cap · Common Pair Scaling<br/>Tiered Risk Envelopes (12% Soft Throttle / 25% Latched Breaker) + Phantom Book"]
-        LEDGER["Immutable SQLite Audit Ledger & Paper Accounting<br/>Append-only decisions, linked trade intents, NAV & PM attribution"]
-
-        M_ENG -->|Target Holdings| RISK
-        P_ENG -->|Linked Pair Legs| RISK
-        C_ENG -->|Spot Target Units| RISK
-        RISK -->|Approved Targets| LEDGER
+    BOARD["Human team<br/>$5M paper mandate and frozen policy"]
+    subgraph QUANT["Lane 1 · Quantitative decisions"]
+        DATA["Equity closes<br/>Declared sessions · no gap filling"]
+        PAIRS["Pairs PM · $1.5M<br/>Kalman hedge · OU forecasts<br/>Frozen formation gate · entry half-life time stop"]
+        RISK["Independent fund risk<br/>80% gross · 20% symbol<br/>12% soft threshold · 25% persistent breaker"]
+        STORE["Exact approval and snapshot<br/>Linked two-leg intentions · zero fills"]
+        DATA --> PAIRS -->|Both signed target legs| RISK --> STORE
     end
-
-    subgraph AILANE["LANE 2: MULTI-AGENT AI AUDIT & IC LANE (Read-Only · Zero Order Authority)"]
-        direction TB
-        PM_AI["3 Specialist AI PM Representatives<br/>Read-only tools: inspect_signals · inspect_model_health · inspect_positions"]
-        CHAIR["AI Investment Committee Chair (CommitteeChairAgent)<br/>Read-only tools: inspect_cross_sleeve_exposure · inspect_phantom_book · inspect_pm_memos<br/>SHA-256 Digest Gate rejects hallucinated metrics"]
-        REPORT["Audited Investor Report & Local Dashboard"]
-
-        PM_AI -->|Evidence Memos| CHAIR
-        CHAIR -->|Verified Brief| REPORT
+    subgraph REVIEW["Lane 2 · Evidence review after risk"]
+        PM["Pairs PM representative<br/>Signals · model health · positions"]
+        PHANTOM["Phantom Book<br/>Proposed vs approved gross"]
+        CHAIR["Committee Chair<br/>Exposure · Phantom Book · PM memo"]
+        PM --> CHAIR
+        PHANTOM --> CHAIR
     end
-
-    BOARD -->|Mandate & Risk Limits| SPINE
-    SLEEVES -.->|Read-Only Diagnostics| PM_AI
-    RISK -.->|Risk Verdicts & Phantom Book| CHAIR
-    LEDGER -->|Verified Facts & SHA-256 Digests| REPORT
-    REPORT -.->|Exception Review| BOARD
+    BOARD -->|Policy| PAIRS
+    BOARD -->|Limits| RISK
+    PAIRS -.->|Read-only diagnostics| PM
+    RISK -.-> PM
+    RISK -.-> PHANTOM
+    STORE --> AUDIT["Atomic SQLite cycle and JSON export"]
+    CHAIR --> AUDIT
+    AUDIT --> PORTAL["Read-only investor portal<br/>Overview · PM · risk · committee · flow · ledger"]
+    RESERVE["Momentum reserve · $1.5M cash<br/>Central cash · $2M"] -.->|Included in NAV| RISK
 ```
 
-| Owner | Responsibility | Reason for this boundary |
-| --- | --- | --- |
-| Human team | Define and validate strategies, approve policy, freeze evaluation assumptions | The team is accountable for the investment objective and submitted evidence |
-| AI representatives and `CommitteeChairAgent` | Choose read-only diagnostic investigations, compare cross-sleeve findings, inspect the Phantom Book and explain evidence | Different PM mandates need contextual review and SHA-256 fact-checked synthesis |
-| Quantitative code | Calculate signals, targets, tiered risk throttling, linked pair scaling, Phantom Book shadow accounting and append-only records | Results and trading decisions must be reproducible and testable |
+## Strategy integration
 
-The current implementation connects crypto and pairs, runs `FundRisk` with tiered
-soft-drawdown throttling (`soft_drawdown` / `soft_drawdown_scale`) and `PhantomBook`
-shadow accounting, runs `PMRepresentative` and `CommitteeChairAgent` with read-only
-tools, provides a read-only local dashboard, and records intentions with zero fills.
-Momentum, automatic model calls, fund fills and consolidated P&L remain pending.
-For the class demonstration, show real diagnostic requests, their returned
-records, PM explanations and the `CommitteeChairAgent` synthesis. The
-[PM guide](fund_agents/README.md#ai-pm-diagnostics-and-memos) records the implemented boundary.
+The upstream revision remains `5d42b04` as checked on 17 October. Four numerical
+files are pinned in `vendor/pairs_trading/SOURCE.json` and checked against their
+recorded local hashes for each proposal. Saved diagnostics include source,
+revision, effective policy, and configured pairs. The default research pair is
+V/MA on XNYS in USD; further pairs require declared calendars, currencies, and
+validated data. The upstream ensemble and crypto candidates are not connected.
+
+Formation through 31 December 2024 gates research entries with upstream
+cointegration, correlation and half-life thresholds. The adapter blocks
+unqualified fallback entries, extreme divergence, and invalid OU estimates.
+It corrects residual forecast standardization and preserves signed beta.
+Confirmed opening sessions determine a frozen OU half-life time limit:
+`min(45, max(1, ceil(2.5 × entry_half_life)))`; invalid entry estimates use the hard cap.
+Future price rows cannot change a prior signal. Missing required sessions hold
+the cycle. Closed-market holdings retain confirmed units without a new trade.
+
+Fund risk counts symbol gross across pair groups before netting. A common scale
+preserves both signed dollar legs. Capital, collateral, and fee reserves can
+bind before the fund cap. The Phantom Book measures exposure reductions, not
+counterfactual profits. Supplied cash and confirmed holdings determine NAV;
+recorded intentions do not change the account or generate returns.
+
+## Persistence and investor access
+
+New accounts and stores are separate from old two-PM state. Reports use
+`pairs-fund-v2`; the active portal indexes only that schema with exactly the
+Pairs PM. Old JSON and SQLite records remain historical on disk. An old cycle
+link falls back to an indexed current cycle. Legacy portfolio/config fields are
+rejected instead of silently reassigning existing holdings.
+
+`python -m fund_agents` runs the synthetic demo. `python -m fund_agents.dashboard`
+serves the localhost GET-only portal. The [run guide](fund_agents/README.md)
+documents historical input, account schema, optional imported replies, and exports.
+Default tools and summaries do not call an LLM. Imported replies must bind to
+facts digests and match structured metric claims; narrative needs human review.
+
+The next engineering milestones are linked-leg fill handling, quote/lot and
+borrow checks, costed and reconciled accounting, provider integration, hosted
+investor access, and a separately validated Momentum engine. Forward performance
+evidence remains necessary before making an investment case.
+
+## Archived standalone research
+
+The following sections describe earlier crypto research retained for history.
+They are not part of the active architecture above.
 
 ## Existing crypto infrastructure from 9 October 2026
 

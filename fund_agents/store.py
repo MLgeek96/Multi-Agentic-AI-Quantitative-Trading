@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import sqlite3
 
-from crypto_agents.models import canonical_json, fingerprint
+from .evidence import canonical_json, fingerprint
 
 
 class FundStore:

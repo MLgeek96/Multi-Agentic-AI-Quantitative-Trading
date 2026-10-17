@@ -4,7 +4,7 @@ from dataclasses import replace
 
 from typing import Any
 
-from crypto_agents.models import fingerprint, json_value
+from .evidence import fingerprint, json_value
 
 from .models import FundConfig, FundSnapshot, PMProposal, PhantomBook, TargetLeg
 
@@ -32,8 +32,8 @@ class FundRisk:
         previous = previous or {"peak_nav_usd": snapshot.peak_nav_usd, "breaker_latched": False, "last_session": None}
         if previous["last_session"] and snapshot.as_of < previous["last_session"]:
             raise ValueError("fund dates cannot run backwards; use a separate account for replay")
-        if {p.pm for p in proposals} != {"crypto", "pairs"} or len(proposals) != 2:
-            raise ValueError("the coordinator requires exactly the two connected PMs")
+        if {p.pm for p in proposals} != {"pairs"} or len(proposals) != 1:
+            raise ValueError("the coordinator requires exactly one Pairs PM proposal")
         decision: dict[str, Any] = {
             "as_of": snapshot.as_of, "account_key": cfg.account_key, "status": "INPUT_HOLD",
             "snapshot_sha256": fingerprint(snapshot),
@@ -51,7 +51,7 @@ class FundRisk:
         if any((h.pm, h.group, h.symbol) not in prices for h in snapshot.holdings):
             raise ValueError("holdings have no audited PM reference price")
         navs = {pm: getattr(snapshot, pm + "_cash_usd") + sum(h.units * prices[(h.pm, h.group, h.symbol)]
-                 for h in snapshot.holdings if h.pm == pm) for pm in ("crypto", "pairs")}
+                 for h in snapshot.holdings if h.pm == pm) for pm in ("pairs",)}
         nav = sum(navs.values()) + snapshot.central_cash_usd + snapshot.momentum_cash_usd
         if nav <= 0 or any(v <= 0 for v in navs.values()):
             raise ValueError("fund and connected sleeve NAVs must be positive")
@@ -60,7 +60,7 @@ class FundRisk:
         latched = previous["breaker_latched"] or drawdown >= cfg.maximum_drawdown
         soft_throttle = (not latched) and (drawdown >= cfg.soft_drawdown)
         decision["state"] = {"peak_nav_usd": peak, "breaker_latched": latched, "last_session": snapshot.as_of}
-        decision["metrics"] = {"marked_nav_usd": nav, "crypto_nav_usd": navs["crypto"],
+        decision["metrics"] = {"marked_nav_usd": nav,
                                "pairs_nav_usd": navs["pairs"], "momentum_cash_usd": snapshot.momentum_cash_usd,
                                "central_cash_usd": snapshot.central_cash_usd, "filled_orders": 0, "realized_pnl": None}
         original = groups
@@ -82,9 +82,9 @@ class FundRisk:
         for symbol in symbols:
             fixed_name = sum(abs(l.units * l.price_usd) for g in fixed for l in g.legs if l.symbol == symbol)
             active_name = sum(abs(l.units * l.price_usd) for g in active for l in g.legs if l.symbol == symbol)
-            limits.append((symbol + " gross across sleeves", cfg.maximum_name_gross * nav - fixed_name, active_name))
+            limits.append((symbol + " gross across pair groups", cfg.maximum_name_gross * nav - fixed_name, active_name))
         fee = cfg.fee_buffer_bps / 10_000
-        for pm in ("crypto", "pairs"):
+        for pm in ("pairs",):
             fixed_pm = sum(g.gross_usd for g in fixed if g.pm == pm)
             active_pm = sum(g.gross_usd for g in active if g.pm == pm)
             current_active_gross = sum(abs(snapshot.units(g.pm, g.group, l.symbol) * l.price_usd)
@@ -118,7 +118,7 @@ class FundRisk:
                 sum(g.gross_usd for g in original if g.pm == pm)
                 - sum(sum(abs(l["units"] * l["price_usd"]) for l in g["legs"]) for g in decision["approved_groups"] if g["pm"] == pm),
             )
-            for pm in ("crypto", "pairs")
+            for pm in ("pairs",)
         }
         decision["phantom_book"] = json_value(
             PhantomBook(

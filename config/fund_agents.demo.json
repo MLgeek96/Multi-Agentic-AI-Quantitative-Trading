@@ -1,9 +1,9 @@
 {
   "mode": "demo",
-  "account_key": "two-pm-demo",
-  "crypto_config_path": "config/agents.demo.json",
-  "state_path": "runtime/fund_agents.demo.sqlite",
-  "report_directory": "runs/fund_agents/demo",
+  "account_key": "pairs-fund-demo",
+  "state_path": "runtime/pairs_fund.demo.sqlite",
+  "report_directory": "runs/fund_agents/pairs_only/demo",
+  "central_cash_usd": 2000000,
   "require_formation_qualification": false,
   "pairs": [{"asset1": "V", "asset2": "MA", "calendar": "XNYS", "currency": "USD"}]
 }
