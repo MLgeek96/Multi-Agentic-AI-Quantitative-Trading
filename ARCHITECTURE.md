@@ -50,77 +50,69 @@ provenance, leaves missing measurements unavailable, and keeps approved target
 exposure separate from confirmed account holdings. It does not invoke PMs,
 connect to exchanges, or mutate SQLite. New reports appear on manual refresh.
 
-## Human, AI and code ownership (proposed)
+## Human, AI and code ownership (Two-Lane Architecture)
 
 The student team acts as the human Board. It approves the strategy definitions,
-capital policy, evaluation assumptions and risk limits. The daily paper cycle can
-run automatically within that policy. Humans review exceptions and policy changes.
+capital policy, evaluation assumptions and risk limits. The daily paper cycle
+runs deterministically within that policy. Humans review exceptions and policy changes.
 
-Each PM combines a quantitative engine with an AI representative. The proposed
-Investment Committee / CIO includes an AI chair for evidence review and a coded
-allocator for the approved capital policy. Its initial USD 5 million paper mandate
-assigns USD 1.5 million to each PM and USD 0.5 million to central cash.
+The architecture separates the **Deterministic Quantitative Spine** (which computes
+signals, sizes targets, enforces tiered risk envelopes and records append-only
+intentions) from the **Multi-Agent AI Audit & IC Lane** (which uses read-only
+diagnostic tools and SHA-256 fact-checked memos to explain decisions without
+holding order authority).
 
 ```mermaid
 flowchart TB
-    H["HUMAN BOARD: student team<br/>Approve models, capital policy and risk limits"]
+    BOARD["HUMAN BOARD OF DIRECTORS<br/>Approve strategies · Set $5M mandate ($1.5M x 3 PMs + $0.5M cash) · Freeze risk policy"]
 
-    subgraph M["Momentum PM: USD 1.5m"]
-        MQ["CODE: rankings and target holdings"]
-        MA["AI: inspect selections and concentration"]
-        MQ -->|Computed evidence| MA
-    end
-    subgraph P["Daily Pairs PM: USD 1.5m"]
-        PQ["CODE: spread, hedge ratio and target legs"]
-        PA["AI: investigate pair health and explain decisions"]
-        PQ -->|Computed evidence| PA
-    end
-    subgraph C["Crypto PM: USD 1.5m"]
-        CQ["CODE: signals and exposure targets"]
-        CA["AI: investigate volatility, costs and cash decisions"]
-        CQ -->|Computed evidence| CA
+    subgraph SPINE["LANE 1: DETERMINISTIC QUANTITATIVE SPINE (100% Reproducible Code)"]
+        direction TB
+        subgraph SLEEVES["Independent Strategy Engines"]
+            M_ENG["Momentum Engine<br/>($1.5M Mandate)"]
+            P_ENG["Daily Pairs Engine<br/>(Kalman + OU Spread · $1.5M)"]
+            C_ENG["Crypto Engine<br/>(Regime + Adaptive Trend · $1.5M)"]
+        end
+        RISK["Independent Fund Risk Gate (Code Veto)<br/>80% Fund Gross · 20% Symbol Cap · Common Pair Scaling<br/>Tiered Risk Envelopes (12% Soft Throttle / 25% Latched Breaker) + Phantom Book"]
+        LEDGER["Immutable SQLite Audit Ledger & Paper Accounting<br/>Append-only decisions, linked trade intents, NAV & PM attribution"]
+
+        M_ENG -->|Target Holdings| RISK
+        P_ENG -->|Linked Pair Legs| RISK
+        C_ENG -->|Spot Target Units| RISK
+        RISK -->|Approved Targets| LEDGER
     end
 
-    H -->|Approved strategy| MQ
-    H -->|Approved strategy| PQ
-    H -->|Approved strategy| CQ
-    MA --> CHAIR
-    PA --> CHAIR
-    CA --> CHAIR
-    CHAIR["AI COMMITTEE CHAIR<br/>Compare evidence, request follow-ups<br/>Draft committee and investor reports"]
+    subgraph AILANE["LANE 2: MULTI-AGENT AI AUDIT & IC LANE (Read-Only · Zero Order Authority)"]
+        direction TB
+        PM_AI["3 Specialist AI PM Representatives<br/>Read-only tools: inspect_signals · inspect_model_health · inspect_positions"]
+        CHAIR["AI Investment Committee Chair (CommitteeChairAgent)<br/>Read-only tools: inspect_cross_sleeve_exposure · inspect_phantom_book · inspect_pm_memos<br/>SHA-256 Digest Gate rejects hallucinated metrics"]
+        REPORT["Audited Investor Report & Local Dashboard"]
 
-    MQ -->|Numerical targets| ALLOC
-    PQ -->|Numerical targets| ALLOC
-    CQ -->|Numerical targets| ALLOC
-    H -->|Approved capital policy| ALLOC
-    CHAIR -.->|Advisory findings| ALLOC
-    ALLOC["CODE: capital allocator<br/>Apply mandates and preserve central cash"]
-    ALLOC --> RISK["CODE: independent risk controller<br/>Check cash, exposure and linked pair positions"]
-    RISK -->|Approved orders| EXEC["PLANNED CODE: paper fills and accounting<br/>Costs, holdings, NAV and PM attribution"]
-    CHAIR --> REPORT["Investor report"]
-    EXEC -->|Verified results| REPORT
+        PM_AI -->|Evidence Memos| CHAIR
+        CHAIR -->|Verified Brief| REPORT
+    end
+
+    BOARD -->|Mandate & Risk Limits| SPINE
+    SLEEVES -.->|Read-Only Diagnostics| PM_AI
+    RISK -.->|Risk Verdicts & Phantom Book| CHAIR
+    LEDGER -->|Verified Facts & SHA-256 Digests| REPORT
+    REPORT -.->|Exception Review| BOARD
 ```
 
 | Owner | Responsibility | Reason for this boundary |
 | --- | --- | --- |
 | Human team | Define and validate strategies, approve policy, freeze evaluation assumptions | The team is accountable for the investment objective and submitted evidence |
-| AI representatives and committee chair | Choose diagnostic investigations, compare findings, ask follow-ups and explain evidence | Different PM mandates need contextual review and discussion |
-| Quantitative code | Calculate signals, targets, allocation, limits, costs and accounting | Results and trading decisions must be reproducible and testable |
+| AI representatives and `CommitteeChairAgent` | Choose read-only diagnostic investigations, compare cross-sleeve findings, inspect the Phantom Book and explain evidence | Different PM mandates need contextual review and SHA-256 fact-checked synthesis |
+| Quantitative code | Calculate signals, targets, tiered risk throttling, linked pair scaling, Phantom Book shadow accounting and append-only records | Results and trading decisions must be reproducible and testable |
 
-The diagram describes the intended architecture. The current implementation
-connects crypto and pairs, provides a read-only local dashboard, and records
-intentions with zero fills. Momentum, an AI committee chair, automatic model
-calls, autonomous tool selection, fund fills and consolidated P&L remain pending.
-Current default PM memos use deterministic diagnostics. Optional imported AI
-replies are checked against the computed evidence and have no trading authority.
-The existing memos run after risk; the proposed chair's advisory input is future
-work and cannot bypass the coded capital policy or risk limits.
-
+The current implementation connects crypto and pairs, runs `FundRisk` with tiered
+soft-drawdown throttling (`soft_drawdown` / `soft_drawdown_scale`) and `PhantomBook`
+shadow accounting, runs `PMRepresentative` and `CommitteeChairAgent` with read-only
+tools, provides a read-only local dashboard, and records intentions with zero fills.
+Momentum, automatic model calls, fund fills and consolidated P&L remain pending.
 For the class demonstration, show real diagnostic requests, their returned
-records, PM explanations and a committee follow-up. Label any illustrative
-exchange or synthetic input. Reporting text alone does not establish that an
-autonomous agent ran. The [PM guide](fund_agents/README.md#ai-pm-diagnostics-and-memos)
-records the implemented boundary.
+records, PM explanations and the `CommitteeChairAgent` synthesis. The
+[PM guide](fund_agents/README.md#ai-pm-diagnostics-and-memos) records the implemented boundary.
 
 ## Existing crypto infrastructure from 9 October 2026
 

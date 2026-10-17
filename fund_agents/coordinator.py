@@ -8,7 +8,7 @@ from crypto_agents.models import RiskState, fingerprint, json_value
 from . import __version__
 from .crypto import CryptoPM
 from .pairs import PairsPM
-from .representative import PMRepresentative
+from .representative import CommitteeChairAgent, PMRepresentative
 from .risk import FundRisk
 
 
@@ -24,8 +24,8 @@ class FundCoordinator:
             raise ValueError("research fund cannot use synthetic Crypto PM inputs")
         if crypto_market.as_of != snapshot.as_of:
             raise ValueError("fund and crypto dates must match")
-        if pm_responses is not None and (not isinstance(pm_responses, dict) or set(pm_responses) - {"crypto", "pairs"}):
-            raise ValueError("PM responses can contain only crypto and pairs envelopes")
+        if pm_responses is not None and (not isinstance(pm_responses, dict) or set(pm_responses) - {"crypto", "pairs", "chair"}):
+            raise ValueError("PM responses can contain only crypto, pairs and chair envelopes")
         cycle_id = str(uuid4())
         with self.store.transaction():
             context = self.store.state(self.config.account_key) or {}
@@ -41,6 +41,7 @@ class FundCoordinator:
             receipts = self.store.record(decision, snapshot)
             responses = pm_responses or {}
             representatives = {p.pm: PMRepresentative(p, decision).memo(responses.get(p.pm)) for p in proposals}
+            chair = CommitteeChairAgent(proposals, decision, representatives).memo(responses.get("chair"))
             state = {"fund": decision["state"], "crypto": crypto.diagnostics.get("risk_state", context.get("crypto"))}
             self.store.save_state(self.config.account_key, state)
             status = decision["status"]
@@ -54,6 +55,7 @@ class FundCoordinator:
                 "portfolio_before": snapshot, "portfolio_after": snapshot,
                 "pm_proposals": {p.pm: p for p in proposals}, "fund_risk": decision,
                 "execution_receipts": receipts, "pm_representatives": representatives,
+                "committee_chair": chair,
                 "momentum_pm": {"status": "NOT_CONNECTED", "reserved_cash_usd": snapshot.momentum_cash_usd},
                 "limitations": [
                     "Execution records linked intentions only. No orders, fills, fees charged or changed holdings.",

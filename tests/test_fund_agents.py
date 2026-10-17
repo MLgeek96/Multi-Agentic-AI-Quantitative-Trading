@@ -271,6 +271,47 @@ class FundAgentTests(unittest.TestCase):
         self.assertEqual(after["pm_representatives"]["pairs"]["status"], "REJECTED")
         self.assertEqual(before["fund_risk"]["approved_groups"], after["fund_risk"]["approved_groups"])
 
+    def test_soft_drawdown_throttle_scales_exposure_and_records_phantom_book(self) -> None:
+        cfg = replace(self.cfg, maximum_fund_gross=0.80, soft_drawdown=0.10, soft_drawdown_scale=0.50)
+        # Drop NAV from 5.0M peak to 4.2M (16% drawdown: above 10% soft_drawdown, below 25% maximum_drawdown)
+        throttled_snapshot = replace(self.snapshot, crypto_cash_usd=1_100_000.0, pairs_cash_usd=1_100_000.0)
+        proposals = self.proposals(pair_gross=1_000_000.0, crypto_gross=1_000_000.0)
+        decision = FundRisk(cfg).review(proposals, throttled_snapshot)
+        self.assertEqual(decision["status"], "REVIEWED")
+        self.assertFalse(decision["state"]["breaker_latched"])
+        self.assertIn("SOFT_DRAWDOWN_THROTTLE", decision["alerts"])
+        phantom = decision["phantom_book"]
+        self.assertTrue(phantom["soft_throttle_active"])
+        self.assertAlmostEqual(phantom["proposed_gross_usd"], 2_000_000.0)
+        # Effective fund gross cap is 0.80 * 0.50 * 4_200_000 = 1_680_000 USD
+        self.assertAlmostEqual(phantom["approved_gross_usd"], 1_680_000.0)
+        self.assertAlmostEqual(phantom["throttled_gross_usd"], 320_000.0)
+
+    def test_committee_chair_agent_validates_cross_sleeve_and_phantom_claims(self) -> None:
+        before = self.run_cycle()
+        chair = before["committee_chair"]
+        self.assertEqual(len(chair["tool_calls"]), 3)
+        self.assertEqual(chair["status"], "NOT_REQUESTED")
+        throttled = before["fund_risk"]["phantom_book"]["throttled_gross_usd"]
+        reply = {
+            "model": "test-chair-model",
+            "input_sha256": chair["input_sha256"],
+            "output": {
+                "summary": "Committee Chair cross-sleeve synthesis",
+                "observations": ["Verified both PM sleeves against risk limits"],
+                "risk_flags": [],
+                "suggested_research": [],
+                "metric_claims": [{"name": "throttled_gross_usd", "value": throttled}],
+            },
+        }
+        envelope = {"chair": {"tool_names": [c["tool"] for c in chair["tool_calls"]], "reply": reply}}
+        validated = self.run_cycle(pm_responses=envelope)
+        self.assertEqual(validated["committee_chair"]["status"], "STRUCTURED_CLAIMS_VALIDATED")
+        reply["output"]["metric_claims"][0]["value"] = throttled + 500_000.0
+        rejected = self.run_cycle(pm_responses=envelope)
+        self.assertEqual(rejected["committee_chair"]["status"], "REJECTED")
+
 
 if __name__ == "__main__":
     unittest.main()
+

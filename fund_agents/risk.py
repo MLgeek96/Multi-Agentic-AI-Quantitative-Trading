@@ -2,26 +2,44 @@
 
 from dataclasses import replace
 
+from typing import Any
+
 from crypto_agents.models import fingerprint, json_value
 
-from .models import TargetLeg
+from .models import FundConfig, FundSnapshot, PMProposal, PhantomBook, TargetLeg
+
+
+ENVELOPE_MULTIPLIERS: dict[str, float] = {
+    "conservative": 0.75,
+    "standard": 1.00,
+    "aggressive": 1.00,
+}
 
 
 class FundRisk:
-    def __init__(self, config):
+    """Independent fund-level risk gate with tiered drawdown throttling and shadow accounting."""
+
+    def __init__(self, config: FundConfig) -> None:
         self.config = config
 
-    def review(self, proposals, snapshot, previous=None):
+    def review(
+        self,
+        proposals: tuple[PMProposal, ...],
+        snapshot: FundSnapshot,
+        previous: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         cfg = self.config
         previous = previous or {"peak_nav_usd": snapshot.peak_nav_usd, "breaker_latched": False, "last_session": None}
         if previous["last_session"] and snapshot.as_of < previous["last_session"]:
             raise ValueError("fund dates cannot run backwards; use a separate account for replay")
         if {p.pm for p in proposals} != {"crypto", "pairs"} or len(proposals) != 2:
             raise ValueError("the coordinator requires exactly the two connected PMs")
-        decision = {"as_of": snapshot.as_of, "account_key": cfg.account_key, "status": "INPUT_HOLD",
-                    "snapshot_sha256": fingerprint(snapshot),
-                    "approved_groups": [], "reviews": [], "metrics": {},
-                    "state": dict(previous, last_session=snapshot.as_of), "alerts": []}
+        decision: dict[str, Any] = {
+            "as_of": snapshot.as_of, "account_key": cfg.account_key, "status": "INPUT_HOLD",
+            "snapshot_sha256": fingerprint(snapshot),
+            "approved_groups": [], "reviews": [], "metrics": {},
+            "state": dict(previous, last_session=snapshot.as_of), "alerts": [],
+        }
         if any(p.status != "READY" for p in proposals):
             decision["alerts"] = [p.pm + ": INPUT_HOLD" for p in proposals if p.status != "READY"]
             decision["decision_id"] = fingerprint(decision)
@@ -38,7 +56,9 @@ class FundRisk:
         if nav <= 0 or any(v <= 0 for v in navs.values()):
             raise ValueError("fund and connected sleeve NAVs must be positive")
         peak = max(previous["peak_nav_usd"], snapshot.peak_nav_usd, nav)
-        latched = previous["breaker_latched"] or 1 - nav / peak >= cfg.maximum_drawdown
+        drawdown = 1.0 - nav / peak
+        latched = previous["breaker_latched"] or drawdown >= cfg.maximum_drawdown
+        soft_throttle = (not latched) and (drawdown >= cfg.soft_drawdown)
         decision["state"] = {"peak_nav_usd": peak, "breaker_latched": latched, "last_session": snapshot.as_of}
         decision["metrics"] = {"marked_nav_usd": nav, "crypto_nav_usd": navs["crypto"],
                                "pairs_nav_usd": navs["pairs"], "momentum_cash_usd": snapshot.momentum_cash_usd,
@@ -48,11 +68,16 @@ class FundRisk:
             decision["alerts"].append("FUND_DRAWDOWN_BREAKER_LATCHED")
             groups = tuple(replace(g, legs=tuple(replace(l, units=0.) for l in g.legs),
                                    reason="Fund drawdown exit request") if g.actionable else g for g in groups)
+        elif soft_throttle:
+            decision["alerts"].append("SOFT_DRAWDOWN_THROTTLE")
         fixed = [g for g in groups if not g.actionable]
         active = [g for g in groups if g.actionable]
         fixed_gross = sum(g.gross_usd for g in fixed)
         active_gross = sum(g.gross_usd for g in active)
-        limits = [("fund gross", cfg.maximum_fund_gross * nav - fixed_gross, active_gross)]
+        envelope_mult = ENVELOPE_MULTIPLIERS[cfg.risk_envelope]
+        effective_fund_gross = cfg.maximum_fund_gross * envelope_mult * (cfg.soft_drawdown_scale if soft_throttle else 1.0)
+        gross_label = "fund gross (soft drawdown throttle)" if soft_throttle else "fund gross"
+        limits = [(gross_label, effective_fund_gross * nav - fixed_gross, active_gross)]
         symbols = {l.symbol for g in groups for l in g.legs}
         for symbol in symbols:
             fixed_name = sum(abs(l.units * l.price_usd) for g in fixed for l in g.legs if l.symbol == symbol)
@@ -86,6 +111,26 @@ class FundRisk:
             decision["approved_groups"].append(json_value(approved))
         gross = sum(sum(abs(l["units"] * l["price_usd"]) for l in g["legs"]) for g in decision["approved_groups"])
         net = sum(sum(l["units"] * l["price_usd"] for l in g["legs"]) for g in decision["approved_groups"])
+        proposed_gross = sum(g.gross_usd for g in original)
+        sleeve_throttled = {
+            pm: max(
+                0.0,
+                sum(g.gross_usd for g in original if g.pm == pm)
+                - sum(sum(abs(l["units"] * l["price_usd"]) for l in g["legs"]) for g in decision["approved_groups"] if g["pm"] == pm),
+            )
+            for pm in ("crypto", "pairs")
+        }
+        decision["phantom_book"] = json_value(
+            PhantomBook(
+                proposed_gross_usd=proposed_gross,
+                approved_gross_usd=gross,
+                throttled_gross_usd=max(0.0, proposed_gross - gross),
+                preserved_buffer_usd=max(0.0, nav - gross),
+                envelope_tier=cfg.risk_envelope,
+                soft_throttle_active=soft_throttle,
+                sleeve_throttled_usd=sleeve_throttled,
+            )
+        )
         decision["metrics"].update(target_gross_usd=gross, target_net_usd=net, target_gross_fraction=gross / nav)
         decision["status"] = "BREAKER_LATCHED" if latched else "REVIEWED"
         decision["decision_id"] = fingerprint(decision)

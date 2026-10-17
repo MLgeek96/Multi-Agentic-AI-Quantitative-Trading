@@ -50,6 +50,9 @@ class FundConfig:
     maximum_fund_gross: float = 0.8
     maximum_name_gross: float = 0.2
     maximum_drawdown: float = 0.25
+    risk_envelope: str = "standard"
+    soft_drawdown: float = 0.12
+    soft_drawdown_scale: float = 0.50
     fee_buffer_bps: float = 15.0
     collateral_buffer: float = 0.02
     pairs_gross_fraction: float = 0.8
@@ -67,17 +70,22 @@ class FundConfig:
     report_directory: str = "runs/fund_agents/demo"
     pairs: tuple[PairSpec, ...] = field(default_factory=lambda: (PairSpec("V", "MA"),))
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.mode not in ("demo", "research") or self.execution_mode != "record_only" or not self.account_key:
             raise ValueError("fund supports demo/research with record_only execution")
+        if self.risk_envelope not in ("standard", "conservative", "aggressive"):
+            raise ValueError("risk_envelope must be standard, conservative or aggressive")
         for name in ("crypto_budget_usd", "pairs_budget_usd"):
             finite(getattr(self, name), name, 1e-12)
         for name in ("momentum_reserve_usd", "central_cash_usd", "fee_buffer_bps"):
             finite(getattr(self, name), name, 0)
-        for name in ("maximum_fund_gross", "maximum_name_gross", "maximum_drawdown", "pairs_gross_fraction"):
+        for name in ("maximum_fund_gross", "maximum_name_gross", "maximum_drawdown", "pairs_gross_fraction",
+                     "soft_drawdown", "soft_drawdown_scale"):
             finite(getattr(self, name), name, 1e-12)
             if getattr(self, name) > 1:
                 raise ValueError(f"{name} cannot exceed one in the initial unlevered mandate")
+        if self.soft_drawdown >= self.maximum_drawdown:
+            raise ValueError("soft_drawdown must be strictly below maximum_drawdown")
         finite(self.collateral_buffer, "collateral_buffer", 0)
         if self.collateral_buffer >= 1 or not (0 < self.exit_z < self.entry_z < self.stop_z):
             raise ValueError("invalid collateral buffer or spread thresholds")
@@ -92,8 +100,22 @@ class FundConfig:
             raise ValueError("invalid formation switch or duplicate/empty pairs")
 
     @property
-    def initial_nav_usd(self):
+    def initial_nav_usd(self) -> float:
         return self.crypto_budget_usd + self.pairs_budget_usd + self.momentum_reserve_usd + self.central_cash_usd
+
+
+@dataclass(frozen=True)
+class PhantomBook:
+    """Shadow accounting of unscaled PM proposals vs. risk-approved exposure."""
+
+    proposed_gross_usd: float
+    approved_gross_usd: float
+    throttled_gross_usd: float
+    preserved_buffer_usd: float
+    envelope_tier: str
+    soft_throttle_active: bool
+    sleeve_throttled_usd: dict[str, float]
+
 
 
 @dataclass(frozen=True)

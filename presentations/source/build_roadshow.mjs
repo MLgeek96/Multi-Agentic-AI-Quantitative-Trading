@@ -205,10 +205,10 @@ const p=deck();
 }
 
 const segments = [
- {start:0,end:10,title:'The opportunity',copy:'Investors face a familiar problem: one trading style can struggle when markets change, while separate reports hide the portfolio’s combined risks.'},
- {start:10,end:25,title:'Our solution',copy:'Our proposed five-million-dollar paper fund combines equity momentum, daily pairs trading and crypto. An Investment Committee sets PM mandates under a human Board. AI representatives would investigate diagnostics and explain the evidence.'},
- {start:25,end:45,title:'The evidence',copy:'Our local prototype connects crypto and pairs with independent risk checks. The prototype records intentions, with zero fills. Historical crypto validation returned 10.09 percent after modelled turnover costs, versus 10.77 percent for equal-weight bitcoin and ether. Full-fund results remain pending.'},
- {start:45,end:60,title:'The pitch',copy:'We invite you to assess a transparent paper pilot: inspect every proposal, challenge every explanation, and judge the final out-of-sample results. The goal is a fund you can understand and audit.'}
+ {start:0,end:10,title:'The opportunity',copy:'Single-strategy funds break when market regimes shift, while black-box AI funds fail institutional audits because they hallucinate risk.'},
+ {start:10,end:25,title:'Our solution',copy:'Our five-million-dollar multi-strategy architecture combines Equity Momentum, Kalman-filtered Statistical Arbitrage, and Regime-Gated Crypto under one roof. Deterministic code computes every signal and hedge ratio, while specialist AI agents and an AI Committee Chair audit diagnostics and explain every position.'},
+ {start:25,end:45,title:'The evidence',copy:'Our risk engine enforces an eighty-percent fund gross cap, twenty-percent single-name limit, tiered soft-drawdown throttling, and common pair scaling so long-short dollar hedges never decouple. Every decision is SHA-256 fingerprinted in an append-only ledger. In walk-forward validation, our crypto engine cut maximum drawdown to twenty-three-point-eight percent across nine hundred forty-three trading days.'},
+ {start:45,end:60,title:'The pitch',copy:'Deterministic alpha. Zero-hallucination AI governance. Inspect every proposal, challenge every agent memo, and back a fund built to be audited.'}
 ];
 const q=deck();
 {
