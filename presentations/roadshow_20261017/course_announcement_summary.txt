@@ -1,0 +1,16 @@
+COURSE ANNOUNCEMENT SUMMARY
+Source: announcement supplied by the user in chat on 17 October 2026.
+
+Deadline: Saturday, 24 October 2026. The announcement does not state an hour.
+Required Canvas upload: one ZIP containing editable presentation slides,
+supporting data and source code.
+Required group-registration update: group name, all member information,
+out-of-sample strategy or forecast performance, and video URL if prepared.
+Video: optional but strongly encouraged, maximum 60 seconds, approximately
+120-140 script words. Narrated PowerPoint is acceptable. Link must work for class.
+Suggested structure: opportunity 0-10s, solution 10-25s, evidence 25-45s, pitch 45-60s.
+Registration spreadsheet:
+https://docs.google.com/spreadsheets/d/1N5ZyqvW8sSQpk8IlT_ByFysJfc27CKGa6ixITQDr76Y/edit?gid=0#gid=0
+
+The original project brief separately requires daily closing prices and named
+individual contributions. Its evaluation window remains 1-23 October 2026.

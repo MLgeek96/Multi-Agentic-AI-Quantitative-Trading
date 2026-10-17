@@ -1,3 +1,6 @@
 # Preserve document bytes across Windows and Unix checkouts.
 *.pdf binary
 *.pptx binary
+
+# Imported engine provenance records exact source bytes, including line endings.
+fund_agents/vendor/pairs_trading/*.py -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

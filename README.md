@@ -2,12 +2,32 @@
 
 ## FE5209 three-PM project design
 
-The [presentation index](presentations/README.md) links the expanded 12-slide
-PowerPoint, PDF preview, earlier short deck and interactive fund explainer.
+The [presentation index](presentations/README.md) links the latest 14-slide
+investor roadshow, four-slide pitch, PDF previews, narration and submission pack.
+The [ownership diagram](ARCHITECTURE.md#human-ai-and-code-ownership-proposed)
+shows the human Board, AI PM representatives, proposed AI committee chair and
+coded allocation/risk responsibilities.
 The proposed USD 5 million paper fund combines equity momentum, daily pairs
-trading and crypto PMs. Each PM has a quantitative engine and a planned AI
-representative with diagnostic tools. The combined fund and connected AI PMs
-remain proposed work; the existing crypto implementation is described below.
+trading and crypto PMs. The local [Crypto and Pairs PM integration](fund_agents/README.md)
+now connects this project's crypto agents to the teammate's Kalman/OU pairs
+engine, with PM diagnostic tools, independent fund risk and linked intention
+records. Momentum, automatic LLM provider calls, fills and consolidated fund
+performance remain future work. The earlier presentation describes the design;
+the run guide records the implemented scope.
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-fund.txt
+.\.venv\Scripts\python.exe -m fund_agents
+```
+
+The demo uses invented data. For the verified historical integration and source
+attribution, see [`reports/fund_agents/integration_report.md`](reports/fund_agents/integration_report.md).
+
+Open the local fund frontend with `.\.venv\Scripts\python.exe -m fund_agents.dashboard`,
+then visit <http://127.0.0.1:8765>. It connects saved crypto/pairs cycles to fund
+and symbol risk dashboards, PM diagnostics and OU forecasts, an interactive
+system flow, and the linked intention ledger. See the
+[dashboard guide](fund_agents/README.md#open-the-fund-dashboard) for details.
 
 ## Local multi-agent research architecture
 

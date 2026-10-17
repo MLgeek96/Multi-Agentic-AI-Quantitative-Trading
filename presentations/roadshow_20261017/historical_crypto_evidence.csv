@@ -1,0 +1,4 @@
+model,period_start,period_end,total_return_percent,maximum_drawdown_percent,sharpe_zero_risk_free,source
+adaptive_trend,2024-01-01,2026-07-31,10.089,-23.778,0.321172860559578,reports/daily_portfolio/research_report.md
+equal_weight_BTC_ETH,2024-01-01,2026-07-31,10.768,,,reports/daily_portfolio/research_report.md
+BTC_buy_and_hold,2024-01-01,2026-07-31,42.346,,,reports/daily_portfolio/research_report.md

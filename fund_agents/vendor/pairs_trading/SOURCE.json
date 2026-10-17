@@ -1,0 +1,32 @@
+{
+  "repository": "https://github.com/MLgeek96/financial-econometrics-project",
+  "commit": "5d42b0463f5d690926b3d29f7647882189b45214",
+  "owner": "MLgeek96",
+  "imported_on": "2026-10-14",
+  "scope": "Team integration into the FE5209 research project",
+  "local_changes": [
+    "forecasting_engine.py: imports use the local relative namespace; numerical and trading fixes live in fund_agents/pairs.py"
+  ],
+  "files": {
+    "kalman_filter.py": {
+      "upstream_path": "pairs_trading/kalman_filter.py",
+      "upstream_sha256": "62497aca6ce34c37ec4d39828e9523a2b62f2a86b53aa3381cc8ad83bd198212",
+      "local_sha256": "62497aca6ce34c37ec4d39828e9523a2b62f2a86b53aa3381cc8ad83bd198212"
+    },
+    "ou_process.py": {
+      "upstream_path": "pairs_trading/ou_process.py",
+      "upstream_sha256": "2b07acc15b4349891d85c081cf5eafb1300721280e3fa8d5babfde6b08ba3d42",
+      "local_sha256": "2b07acc15b4349891d85c081cf5eafb1300721280e3fa8d5babfde6b08ba3d42"
+    },
+    "forecasting_engine.py": {
+      "upstream_path": "pairs_trading/forecasting_engine.py",
+      "upstream_sha256": "a14f74a4aa00131b79aec8a88454ca10f2c08088ddd4f2b9f56bbb72d5ff6af3",
+      "local_sha256": "394c9de115c29b9b24c37ef9af142641208aa4bce344ba10fed2999ed6a9fcd6"
+    },
+    "pair_selection.py": {
+      "upstream_path": "pairs_trading/pair_selection.py",
+      "upstream_sha256": "2a57212777a3be1b6283902e8c63dab801e4f6d5592c6684a8c883c79bf3f811",
+      "local_sha256": "2a57212777a3be1b6283902e8c63dab801e4f6d5592c6684a8c883c79bf3f811"
+    }
+  }
+}

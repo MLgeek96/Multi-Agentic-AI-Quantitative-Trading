@@ -1,0 +1,15 @@
+FE5209 60-second pitch narration
+124 whitespace-delimited words. Rehearse to 58-60 seconds.
+Timing is a recording plan, not a measured narration duration.
+
+00-10 seconds: The opportunity
+Investors face a familiar problem: one trading style can struggle when markets change, while separate reports hide the portfolio’s combined risks.
+
+10-25 seconds: Our solution
+Our proposed five-million-dollar paper fund combines equity momentum, daily pairs trading and crypto. An Investment Committee sets PM mandates under a human Board. AI representatives would investigate diagnostics and explain the evidence.
+
+25-45 seconds: The evidence
+Our local prototype connects crypto and pairs with independent risk checks. The prototype records intentions, with zero fills. Historical crypto validation returned 10.09 percent after modelled turnover costs, versus 10.77 percent for equal-weight bitcoin and ether. Full-fund results remain pending.
+
+45-60 seconds: The pitch
+We invite you to assess a transparent paper pilot: inspect every proposal, challenge every explanation, and judge the final out-of-sample results. The goal is a fund you can understand and audit.

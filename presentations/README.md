@@ -1,12 +1,41 @@
 # FE5209 multi-agent project materials
 
-## Latest deck
+## Investor roadshow, 17 October 2026
+
+- [Human, AI and code ownership diagram](../ARCHITECTURE.md#human-ai-and-code-ownership-proposed)
+- [Editable 14-slide investor roadshow](roadshow_20261017/FE5209_Investor_Roadshow_v2.pptx)
+- [Roadshow PDF preview](../output/pdf/FE5209_Investor_Roadshow_v2.pdf)
+- [Four-slide one-minute pitch](roadshow_20261017/FE5209_60_Second_Pitch_v2.pptx)
+- [Pitch and submission guide](../output/pdf/FE5209_Roadshow_Pitch_and_Submission_Guide.pdf)
+- [Presentation materials ZIP](roadshow_20261017/FE5209_Roadshow_Materials.zip)
+
+The proposed governance is Investors, a human Board of Directors, an Investment
+Committee / CIO, and three strategy PMs. The Investment Committee takes the
+presentation role previously called Portfolio Coordinator. Coded risk retains
+approval authority. This revision reflects the newer local crypto/pairs
+integration and separates historical crypto baseline results from pending
+consolidated fund performance.
+
+The pack includes a 124-word narration script, timed storyboard in the guide,
+draft subtitles and a detailed checklist for the 24 October submission. It is
+a presentation handoff pack rather than the final course ZIP. Member names,
+final out-of-sample results, strategy/data packaging and optional video recording
+remain team work. No Canvas or registration-sheet update has taken place.
+
+Rebuild these materials with [build_roadshow.mjs](source/build_roadshow.mjs), then
+[export_roadshow_pack.py](source/export_roadshow_pack.py). They use the same runtime
+variables described below. Use fresh build and output directories and set
+`FE5209_PDF_OUTPUT_DIR` to a fresh PDF directory when rebuilding because finalized
+files are preserved. The PDF previews are raster slide images.
+Native editable content and the presenter notes remain in the PowerPoint files.
+
+## Earlier scope deck, 14 October 2026
 
 - [Expanded 12-slide PowerPoint with speaker notes](FE5209_Multi_Agent_Project_Expanded.pptx)
 - [Matching PDF preview](../output/pdf/FE5209_Multi_Agent_Project_Expanded.pdf)
 - [Interactive fund explainer](design/three-pm-fund.html): download and open in a browser.
 
-The latest deck is dated 14 October 2026. It describes a proposed USD 5 million
+That earlier deck is dated 14 October 2026. It describes a proposed USD 5 million
 paper fund with equity momentum, pairs trading and crypto PMs. Initial illustrative
 mandates are USD 1.5 million per PM and USD 0.5 million of central cash. Pairs
 frequency is confirmed as daily. The teammates' exact tickers, momentum cadence
@@ -15,9 +44,11 @@ and signal/fill conventions still need confirmation.
 Each proposed AI PM representative selects diagnostic tools and writes a memo
 linked to computed evidence. Quantitative engines calculate target positions.
 A coordinator combines portfolios and assigns capital, and an independent risk
-controller governs execution. The combined fund and connected AI representatives
-remain proposed work. The slides distinguish that scope from the existing crypto
-prototype and its research limitations.
+controller governs execution. The slides describe the design before the local
+two-PM integration. The [current implementation guide](../fund_agents/README.md)
+now connects Crypto and Pairs PM engines with diagnostic tools and fund risk.
+Momentum, automatic LLM provider calls, fills and consolidated performance
+remain future work. The deck has not been regenerated for this implementation.
 
 The PDF is a visual preview. Editable objects and presenter notes are in the PPTX.
 GitHub stores these files; this upload does not deploy a trading service.

@@ -1,0 +1,49 @@
+FE5209 FINAL SUBMISSION CHECKLIST - DUE 24 OCTOBER 2026
+
+This roadshow handoff ZIP contains presentation materials only. It is not the
+final course submission. Strategy source, supporting prices, final fund results,
+member names and the optional video must be added or completed by the team.
+
+BEFORE RECORDING
+[ ] Agree the group/fund name and enter every member's name and responsibility.
+[ ] Confirm mandatory assets, official benchmark, capital and cost conventions.
+[ ] Replace proposed capability with actual capability only when demonstrated.
+[ ] Add final consolidated out-of-sample evidence, with dates and trading costs.
+[ ] Label historical validation, synthetic demonstrations and replays separately.
+[ ] Confirm daily pairs signal time, fill time, shorting/borrow and both-leg handling.
+[ ] Preserve genuine October records and the combined fund's actual start date.
+
+CANVAS ZIP - REQUIRED
+[ ] Editable roadshow PPTX, final named contribution statement, optional PDF copy.
+[ ] All strategy and integration source, requirements and reproducible run commands.
+[ ] Supporting data, asset identifiers, price timestamps and data provenance.
+[ ] Daily closing-price CSV for every included portfolio asset.
+[ ] Costed fund/PM NAV history and benchmark on the same dates and calendar.
+[ ] Net P&L, return, Sharpe, volatility, MDD, trade count, win rate, profit per trade,
+    holding period, and drawdown frequency/duration. Mark undefined values N/A.
+[ ] Final code/data snapshot and an archive inventory. Exclude credentials/caches.
+[ ] Unzip into a fresh folder and check that documented runs reproduce outputs.
+[ ] Confirm the exact Canvas cutoff hour/timezone and upload one final ZIP.
+
+REGISTRATION SHEET - REQUIRED
+[ ] Group name and all members' details.
+[ ] Out-of-sample performance with period, benchmark and cost convention.
+[ ] Video link, if produced, accessible to the entire class.
+
+OPTIONAL 60-SECOND VIDEO
+[ ] Record the four pitch slides using the supplied narration in speaker notes.
+[ ] Rehearse and shorten pauses to keep the exported MP4 at or below 60 seconds.
+[ ] Add subtitles and align the draft SRT with the actual recorded speech.
+[ ] Use the final group name. Keep unsupported performance claims out of the pitch.
+[ ] Test playback and class access to the hosted link in a separate browser session.
+
+SUGGESTED ROLE OWNERS - REPLACE WITH ACTUAL NAMES
+Momentum PM owner: ____________________
+Pairs PM owner: _______________________
+Crypto PM owner: ______________________
+Fund integration and risk: ____________
+Reporting and operations: _____________
+For a four-person team, distribute the last two responsibilities explicitly.
+
+No Canvas submission, spreadsheet update, hosted deployment or video upload has
+been performed by preparing this pack.

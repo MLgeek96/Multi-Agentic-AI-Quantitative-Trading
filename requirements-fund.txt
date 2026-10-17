@@ -1,0 +1,4 @@
+-r requirements.txt
+scipy>=1.11,<2
+statsmodels>=0.14,<0.16
+exchange-calendars>=4,<5

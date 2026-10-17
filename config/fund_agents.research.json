@@ -1,0 +1,10 @@
+{
+  "mode": "research",
+  "account_key": "two-pm-research",
+  "crypto_config_path": "config/agents.research.json",
+  "state_path": "runtime/fund_agents.research.sqlite",
+  "report_directory": "runs/fund_agents/research",
+  "formation_end": "2024-12-31",
+  "require_formation_qualification": true,
+  "pairs": [{"asset1": "V", "asset2": "MA", "calendar": "XNYS", "currency": "USD"}]
+}

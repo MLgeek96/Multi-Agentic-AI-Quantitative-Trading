@@ -1,4 +1,128 @@
-# Crypto agent infrastructure — phase 1
+# Crypto and pairs PM agent infrastructure
+
+## Fund coordinator added on 14 October 2026
+
+`fund_agents` connects the existing Crypto PM to the teammate's daily Kalman/OU
+Pairs PM. Each PM owns its quantitative engine and has a representative exposing
+read-only signal, model-health and position tools. Imported AI memos are checked
+against computed evidence after quantitative risk decisions.
+
+```mermaid
+flowchart TD
+    C[Existing crypto_agents engine and local Risk] --> FC[Fund coordinator]
+    P[Teammate Kalman and OU pairs engine] --> FC
+    FC --> FR[Independent fund Risk: capital, gross, names, linked hedges]
+    FR --> E[Persist approved target groups]
+    E --> X[Execution: record linked intentions, zero fills]
+    C --> CT[Crypto PM diagnostic tools]
+    P --> PT[Pairs PM diagnostic tools]
+    FR --> CT
+    FR --> PT
+    CT --> CM[Advisory Crypto PM memo]
+    PT --> PM[Advisory Pairs PM memo]
+    X --> DB[Separate fund SQLite audit]
+    CM --> DB
+    PM --> DB
+    DB --> J[Export saved JSON cycle]
+    J --> UI[Read-only local dashboard: risk, PM diagnostics, flow, ledger]
+```
+
+The shared fund contracts allow signed pair quantities and retain both legs in
+one group. Crypto's internal nonnegative Spot contracts are retained by its
+adapter. Fund risk counts gross exposure before netting and uses common scaling
+to preserve dollar hedge ratios. Equity calendars, last actual session dates,
+and explicit USD/USDT or dated foreign-currency valuations are exposed in the
+reports. Confirmed snapshots supply holdings; intention records never become
+fills. Fund and crypto breaker state persist together in the separate fund store.
+
+Run `python -m fund_agents` for the invented-data demo. The
+[integration guide](fund_agents/README.md) covers historical research,
+confirmed positions, imported PM replies and output files. Momentum is an
+unconnected cash reserve. Automatic LLM calls, executable lot sizing and borrow
+checks, paper fills, and consolidated performance are not implemented here.
+
+`python -m fund_agents.dashboard` serves the local frontend on
+`http://127.0.0.1:8765`. Its GET-only report API indexes coordinator JSON exports
+and serves reports only by indexed relative identity. Static assets are local
+and explicitly allowlisted. The frontend shares one selected cycle across its
+overview, risk, PM, flow and audit views; it displays valuation dates and demo
+provenance, leaves missing measurements unavailable, and keeps approved target
+exposure separate from confirmed account holdings. It does not invoke PMs,
+connect to exchanges, or mutate SQLite. New reports appear on manual refresh.
+
+## Human, AI and code ownership (proposed)
+
+The student team acts as the human Board. It approves the strategy definitions,
+capital policy, evaluation assumptions and risk limits. The daily paper cycle can
+run automatically within that policy. Humans review exceptions and policy changes.
+
+Each PM combines a quantitative engine with an AI representative. The proposed
+Investment Committee / CIO includes an AI chair for evidence review and a coded
+allocator for the approved capital policy. Its initial USD 5 million paper mandate
+assigns USD 1.5 million to each PM and USD 0.5 million to central cash.
+
+```mermaid
+flowchart TB
+    H["HUMAN BOARD: student team<br/>Approve models, capital policy and risk limits"]
+
+    subgraph M["Momentum PM: USD 1.5m"]
+        MQ["CODE: rankings and target holdings"]
+        MA["AI: inspect selections and concentration"]
+        MQ -->|Computed evidence| MA
+    end
+    subgraph P["Daily Pairs PM: USD 1.5m"]
+        PQ["CODE: spread, hedge ratio and target legs"]
+        PA["AI: investigate pair health and explain decisions"]
+        PQ -->|Computed evidence| PA
+    end
+    subgraph C["Crypto PM: USD 1.5m"]
+        CQ["CODE: signals and exposure targets"]
+        CA["AI: investigate volatility, costs and cash decisions"]
+        CQ -->|Computed evidence| CA
+    end
+
+    H -->|Approved strategy| MQ
+    H -->|Approved strategy| PQ
+    H -->|Approved strategy| CQ
+    MA --> CHAIR
+    PA --> CHAIR
+    CA --> CHAIR
+    CHAIR["AI COMMITTEE CHAIR<br/>Compare evidence, request follow-ups<br/>Draft committee and investor reports"]
+
+    MQ -->|Numerical targets| ALLOC
+    PQ -->|Numerical targets| ALLOC
+    CQ -->|Numerical targets| ALLOC
+    H -->|Approved capital policy| ALLOC
+    CHAIR -.->|Advisory findings| ALLOC
+    ALLOC["CODE: capital allocator<br/>Apply mandates and preserve central cash"]
+    ALLOC --> RISK["CODE: independent risk controller<br/>Check cash, exposure and linked pair positions"]
+    RISK -->|Approved orders| EXEC["PLANNED CODE: paper fills and accounting<br/>Costs, holdings, NAV and PM attribution"]
+    CHAIR --> REPORT["Investor report"]
+    EXEC -->|Verified results| REPORT
+```
+
+| Owner | Responsibility | Reason for this boundary |
+| --- | --- | --- |
+| Human team | Define and validate strategies, approve policy, freeze evaluation assumptions | The team is accountable for the investment objective and submitted evidence |
+| AI representatives and committee chair | Choose diagnostic investigations, compare findings, ask follow-ups and explain evidence | Different PM mandates need contextual review and discussion |
+| Quantitative code | Calculate signals, targets, allocation, limits, costs and accounting | Results and trading decisions must be reproducible and testable |
+
+The diagram describes the intended architecture. The current implementation
+connects crypto and pairs, provides a read-only local dashboard, and records
+intentions with zero fills. Momentum, an AI committee chair, automatic model
+calls, autonomous tool selection, fund fills and consolidated P&L remain pending.
+Current default PM memos use deterministic diagnostics. Optional imported AI
+replies are checked against the computed evidence and have no trading authority.
+The existing memos run after risk; the proposed chair's advisory input is future
+work and cannot bypass the coded capital policy or risk limits.
+
+For the class demonstration, show real diagnostic requests, their returned
+records, PM explanations and a committee follow-up. Label any illustrative
+exchange or synthetic input. Reporting text alone does not establish that an
+autonomous agent ran. The [PM guide](fund_agents/README.md#ai-pm-diagnostics-and-memos)
+records the implemented boundary.
+
+## Existing crypto infrastructure from 9 October 2026
 
 Implemented 9 October 2026. The structure follows the supplied BURSA architecture:
 one local Python process with explicit ownership, typed messages, a final Risk

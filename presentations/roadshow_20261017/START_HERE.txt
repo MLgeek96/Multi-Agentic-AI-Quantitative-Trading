@@ -1,0 +1,49 @@
+FE5209 INVESTOR ROADSHOW MATERIALS - 17 OCTOBER 2026
+
+OPEN FIRST
+slides/FE5209_Investor_Roadshow_v2.pptx in the ZIP, or the matching PPTX in this
+folder. This is the main 14-slide presentation. All slide text, tables, charts
+and the governance diagram are editable. Presenter notes contain explanations
+and source references.
+
+ONE-MINUTE PITCH
+Use FE5209_60_Second_Pitch_v2.pptx with 60_second_pitch_script.txt.
+The narration is 124 whitespace-delimited words, planned over 60 seconds.
+Record and measure the actual export duration. The SRT is a draft to align
+with your recorded speech. No narrated audio or MP4 is included.
+
+GUIDE AND PREVIEWS
+The ZIP contains PDF slide previews and a four-page pitch/submission guide.
+The original PDF files are in output/pdf in the repository.
+Use submission_checklist.txt to complete the required course submission.
+
+GOVERNANCE
+Investors provide illustrative capital. The human student team acts as the
+Board of Directors. Investment Committee / CIO replaces Portfolio Coordinator
+as the presentation label for mandate review and capital allocation.
+Three PMs own their quantitative engines and proposed AI representatives.
+Coded risk retains approval authority. The trading software is unchanged.
+
+STILL TO COMPLETE
+Enter the actual group name, member names and individual contributions.
+Confirm mandatory assets, official benchmark and remaining strategy details.
+Add final costed consolidated out-of-sample performance before submission.
+Record and host the optional video if the team chooses to prepare one.
+The current integration produces intentions with zero fills.
+
+THE ZIP IS A PRESENTATION HANDOFF PACK
+It is not the complete final Canvas submission. It includes historical summary
+evidence and documentation snapshots, rather than the full trading code or
+supporting market-price data. No Canvas upload or registration-sheet edit has
+been performed.
+
+REBUILD SOURCES
+The build_sources folder in the ZIP holds source snapshots. In a full repository
+checkout, place them in presentations/source. Use the Codex bundled Node.js,
+Python, @oai/artifact-tool and the installed presentations skill. Set:
+RUNTIME_NODE_MODULES, RUNTIME_PYTHON, FE5209_PRESENTATION_SKILL_DIR,
+FE5209_DECK_BUILD_DIR and FE5209_DECK_OUTPUT_DIR.
+Set FE5209_PDF_OUTPUT_DIR to a fresh PDF directory when rebuilding previews.
+Choose fresh build/output directories. Run build_roadshow.mjs with bundled Node,
+then export_roadshow_pack.py with bundled Python. The current source produces
+the v2 filenames. It preserves existing output files.
