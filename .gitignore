@@ -1,4 +1,6 @@
+.venv
 .venv/
+.freqtrade-venv
 .freqtrade-venv/
 binance-public-data/
 datasets/
@@ -43,3 +45,6 @@ local_portfolios/
 local_llm/
 *.log
 =
+
+# macOS
+.DS_Store
