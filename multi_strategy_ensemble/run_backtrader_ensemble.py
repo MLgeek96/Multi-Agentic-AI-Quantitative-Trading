@@ -69,7 +69,9 @@ def main():
         start_date=cfg.OUT_OF_SAMPLE_START,
         end_date=cfg.END_DATE,
         slippage_bps=2.0,
-        rf_annual=cfg.RISK_FREE_RATE_ANNUAL
+        rf_annual=cfg.RISK_FREE_RATE_ANNUAL,
+        warmup_bars=120,   # pre-test bars for 60-day indicator formation (no trading)
+        min_test_bars=5,   # short Oct-2026 test window (~13 trading days)
     )
 
     metrics_df = res["metrics_summary"]
