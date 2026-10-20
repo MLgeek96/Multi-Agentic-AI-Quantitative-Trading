@@ -58,6 +58,7 @@ class BacktraderTrendFollowing(bt.Strategy):
         ("atr_mult", 2.5),
         ("rf_annual", 0.04),
         ("enable_cash_yield", True),
+        ("trade_start", None),       # datetime.date: bars before this are indicator warm-up only
     )
 
     def __init__(self):
@@ -79,6 +80,8 @@ class BacktraderTrendFollowing(bt.Strategy):
 
     def next(self):
         dt = self.datas[0].datetime.date(0)
+        if self.p.trade_start is not None and dt < self.p.trade_start:
+            return  # warm-up bar: no trading, no P&L recording
 
         # Accrue interest on idle cash
         if self.p.enable_cash_yield:
@@ -157,15 +160,19 @@ class BacktraderCrossSectionalMomentum(bt.Strategy):
         ("top_k", 5),
         ("rf_annual", 0.04),
         ("enable_cash_yield", True),
+        ("trade_start", None),       # datetime.date: bars before this are indicator warm-up only
     )
 
     def __init__(self):
         self.rf_daily = (1.0 + self.p.rf_annual) ** (1.0 / 252.0) - 1.0
         self.bar_counter = 0
+        self.rebalance_anchor = None
         self.daily_records = []
 
     def next(self):
         dt = self.datas[0].datetime.date(0)
+        if self.p.trade_start is not None and dt < self.p.trade_start:
+            return  # warm-up bar: no trading, no P&L recording
         self.bar_counter += 1
 
         if self.p.enable_cash_yield:
@@ -173,8 +180,13 @@ class BacktraderCrossSectionalMomentum(bt.Strategy):
             if cash > 0:
                 self.broker.add_cash(cash * self.rf_daily)
 
-        # Rebalance only every rebalance_interval bars
-        if self.bar_counter < self.p.lookback_days or (self.bar_counter % self.p.rebalance_interval) != 0:
+        # Rebalance on the first bar with a full lookback, then every rebalance_interval bars
+        if len(self.datas[0]) < self.p.lookback_days:
+            self.daily_records.append({"date": dt, "equity": self.broker.getvalue(), "cash": self.broker.getcash()})
+            return
+        if self.rebalance_anchor is None:
+            self.rebalance_anchor = self.bar_counter
+        if (self.bar_counter - self.rebalance_anchor) % self.p.rebalance_interval != 0:
             self.daily_records.append({"date": dt, "equity": self.broker.getvalue(), "cash": self.broker.getcash()})
             return
 
@@ -272,6 +284,7 @@ class BacktraderMultiPairReversion(bt.Strategy):
         ("capital_per_pair", 25_000.0),
         ("rf_annual", 0.04),
         ("enable_cash_yield", True),
+        ("trade_start", None),       # datetime.date: bars before this are indicator warm-up only
     )
 
     def __init__(self):
@@ -298,6 +311,8 @@ class BacktraderMultiPairReversion(bt.Strategy):
 
     def next(self):
         dt = self.datas[0].datetime.date(0)
+        if self.p.trade_start is not None and dt < self.p.trade_start:
+            return  # warm-up bar: no trading, no P&L recording
 
         if self.p.enable_cash_yield:
             cash = self.broker.getcash()
@@ -443,7 +458,9 @@ def run_backtrader_multi_strategy_suite(
     start_date: str = "2025-01-01",
     end_date: str = "2026-08-31",
     slippage_bps: float = 2.0,
-    rf_annual: float = 0.04
+    rf_annual: float = 0.04,
+    warmup_bars: int = 0,
+    min_test_bars: int = 20
 ) -> Dict[str, Any]:
     """
     Executes the full Backtrader Multi-Strategy Ensemble suite over out-of-sample data:
@@ -454,22 +471,34 @@ def run_backtrader_multi_strategy_suite(
     5. Risk Parity (Inverse-Volatility) Ensemble
     6. Dynamic Regime-Routed Ensemble
     7. Benchmark (SPY) Buy & Hold
+
+    warmup_bars: number of trading bars before start_date fed to Backtrader purely for
+    indicator warm-up (no trades / no P&L). Required for short test windows, since the
+    strategies need 60-bar lookbacks.
     """
     # Slice to OOS window
     common_idx = universe_prices.index.intersection(benchmark_series.index).sort_values()
     oos_idx = common_idx[(common_idx >= pd.to_datetime(start_date)) & (common_idx <= pd.to_datetime(end_date))]
-    if len(oos_idx) < 20:
+    if len(oos_idx) < min_test_bars:
         raise ValueError(f"Insufficient out-of-sample bars ({len(oos_idx)}) between {start_date} and {end_date}.")
 
+    # Prepend warm-up history (indicator formation only)
+    pre_idx = common_idx[common_idx < pd.to_datetime(start_date)]
+    warm_idx = pre_idx[-warmup_bars:] if warmup_bars > 0 else pre_idx[:0]
+    feed_idx = warm_idx.append(oos_idx)
+    trade_start = pd.to_datetime(start_date).date() if warmup_bars > 0 else None
+
     # Filter active tickers with non-zero variance (removes delisted symbols)
+    min_obs = min(30, len(feed_idx))
     valid_cols = [
         c for c in universe_prices.columns
-        if len(universe_prices.loc[oos_idx, c].dropna()) >= 30
-        and universe_prices.loc[oos_idx, c].dropna().std() > 1e-6
-        and (universe_prices.loc[oos_idx, c].dropna() > 0).any()
+        if len(universe_prices.loc[feed_idx, c].dropna()) >= min_obs
+        and universe_prices.loc[feed_idx, c].dropna().std() > 1e-6
+        and (universe_prices.loc[feed_idx, c].dropna() > 0).any()
     ]
-    prices_oos = universe_prices.loc[oos_idx, valid_cols]
-    bench_oos = benchmark_series.loc[oos_idx]
+    prices_oos = universe_prices.loc[feed_idx, valid_cols]
+    bench_oos = benchmark_series.loc[feed_idx]
+    oos_idx = feed_idx  # feeds below span warm-up + test window
 
     slippage_perc = slippage_bps / 10_000.0
 
@@ -479,6 +508,7 @@ def run_backtrader_multi_strategy_suite(
     cerebro_trend = bt.Cerebro()
     cerebro_trend.broker.setcash(initial_capital)
     cerebro_trend.broker.set_slippage_perc(slippage_perc)
+    cerebro_trend.broker.set_coc(True)  # Cheat-on-close: MOC execution at bar close
 
     for ticker in prices_oos.columns:
         p_ser = prices_oos[ticker]
@@ -495,7 +525,7 @@ def run_backtrader_multi_strategy_suite(
         comm = create_market_commission(ticker)
         cerebro_trend.broker.addcommissioninfo(comm, name=ticker)
 
-    cerebro_trend.addstrategy(BacktraderTrendFollowing, rf_annual=rf_annual)
+    cerebro_trend.addstrategy(BacktraderTrendFollowing, rf_annual=rf_annual, trade_start=trade_start)
     res_trend = cerebro_trend.run()
     trend_df = pd.DataFrame(res_trend[0].daily_records).set_index("date")["equity"]
 
@@ -505,6 +535,7 @@ def run_backtrader_multi_strategy_suite(
     cerebro_mom = bt.Cerebro()
     cerebro_mom.broker.setcash(initial_capital)
     cerebro_mom.broker.set_slippage_perc(slippage_perc)
+    cerebro_mom.broker.set_coc(True)  # Cheat-on-close: MOC execution at bar close
 
     for ticker in prices_oos.columns:
         p_ser = prices_oos[ticker]
@@ -521,7 +552,7 @@ def run_backtrader_multi_strategy_suite(
         comm = create_market_commission(ticker)
         cerebro_mom.broker.addcommissioninfo(comm, name=ticker)
 
-    cerebro_mom.addstrategy(BacktraderCrossSectionalMomentum, rf_annual=rf_annual)
+    cerebro_mom.addstrategy(BacktraderCrossSectionalMomentum, rf_annual=rf_annual, trade_start=trade_start)
     res_mom = cerebro_mom.run()
     mom_df = pd.DataFrame(res_mom[0].daily_records).set_index("date")["equity"]
 
@@ -531,6 +562,7 @@ def run_backtrader_multi_strategy_suite(
     cerebro_mr = bt.Cerebro()
     cerebro_mr.broker.setcash(initial_capital)
     cerebro_mr.broker.set_slippage_perc(slippage_perc)
+    cerebro_mr.broker.set_coc(True)  # Cheat-on-close: MOC execution at bar close
 
     # Add only candidate pair assets to MR feed
     mr_assets = set()
@@ -556,7 +588,7 @@ def run_backtrader_multi_strategy_suite(
         comm = create_market_commission(ticker)
         cerebro_mr.broker.addcommissioninfo(comm, name=ticker)
 
-    cerebro_mr.addstrategy(BacktraderMultiPairReversion, pairs_tuples=valid_pairs, rf_annual=rf_annual)
+    cerebro_mr.addstrategy(BacktraderMultiPairReversion, pairs_tuples=valid_pairs, rf_annual=rf_annual, trade_start=trade_start)
     res_mr = cerebro_mr.run()
     mr_df = pd.DataFrame(res_mr[0].daily_records).set_index("date")["equity"]
 
@@ -568,6 +600,7 @@ def run_backtrader_multi_strategy_suite(
         "Momentum": mom_df,
         "Mean_Reversion": mr_df
     }).dropna().ffill()
+    eq_matrix.index = pd.to_datetime(eq_matrix.index)
 
     r_trend = eq_matrix["Trend"].pct_change().fillna(0.0)
     r_mom = eq_matrix["Momentum"].pct_change().fillna(0.0)
@@ -590,20 +623,23 @@ def run_backtrader_multi_strategy_suite(
     eq_risk_parity = initial_capital * (1.0 + r_rp).cumprod()
 
     # 3. Dynamic Regime Router
+    # Uses the detector's own weight columns (same allocation table as the vectorized engine).
+    # Previously this matched on "TRENDING", but the detector emits "TRENDING_BULL"/"TRENDING_BEAR",
+    # so every non-crisis/ranging day fell through to equal weight.
+    # Weights are lagged one bar: regime observed at close t is applied to the return on t+1.
     detector = RegimeDetector()
-    regimes_df = detector.detect_regimes(bench_oos).loc[eq_matrix.index]
-    r_regime = pd.Series(0.0, index=eq_matrix.index)
-
-    for d_idx in eq_matrix.index:
-        reg_state = regimes_df.loc[d_idx, "regime"] if d_idx in regimes_df.index else "TRANSITION"
-        if reg_state == "CRISIS":
-            r_regime.loc[d_idx] = (1.0 + rf_annual) ** (1.0 / 252.0) - 1.0
-        elif reg_state == "TRENDING":
-            r_regime.loc[d_idx] = 0.60 * r_trend.loc[d_idx] + 0.30 * r_mom.loc[d_idx] + 0.10 * r_mr.loc[d_idx]
-        elif reg_state == "RANGING":
-            r_regime.loc[d_idx] = 0.20 * r_trend.loc[d_idx] + 0.20 * r_mom.loc[d_idx] + 0.60 * r_mr.loc[d_idx]
-        else: # TRANSITION
-            r_regime.loc[d_idx] = (r_trend.loc[d_idx] + r_mom.loc[d_idx] + r_mr.loc[d_idx]) / 3.0
+    regimes_full = detector.detect_regimes(bench_oos)
+    regimes_df = regimes_full.loc[eq_matrix.index]
+    w_cols = ["weight_trend", "weight_momentum", "weight_reversion", "weight_cash"]
+    w_lag = regimes_full[w_cols].shift(1).loc[eq_matrix.index]
+    w_lag = w_lag.fillna(pd.Series({"weight_trend": 1/3, "weight_momentum": 1/3, "weight_reversion": 1/3, "weight_cash": 0.0}))
+    rf_daily = (1.0 + rf_annual) ** (1.0 / 252.0) - 1.0
+    r_regime = (
+        w_lag["weight_trend"] * r_trend
+        + w_lag["weight_momentum"] * r_mom
+        + w_lag["weight_reversion"] * r_mr
+        + w_lag["weight_cash"] * rf_daily
+    )
 
     eq_regime = initial_capital * (1.0 + r_regime).cumprod()
 

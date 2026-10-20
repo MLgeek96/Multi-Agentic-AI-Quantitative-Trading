@@ -30,7 +30,7 @@ class EnsembleConfig:
     START_DATE: str = "2014-01-01"
     IN_SAMPLE_END: str = "2026-09-30"        # In-sample calibration up to eve of Oct 2026
     OUT_OF_SAMPLE_START: str = "2026-10-01"  # Test period begins Oct 1, 2026
-    END_DATE: str = "2026-10-16"             # Current test period cutoff (Oct 16; extend to 2026-10-23 next Friday)
+    END_DATE: str = "2026-10-19"             # Current test period cutoff (Oct 19; extend to 2026-10-23 next Friday)
 
     # ----------------------------------------------------
     # Capital & Realistic Execution Friction (Lessons 07 & 18)
